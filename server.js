@@ -218,8 +218,8 @@ app.delete('/api/proyectos/:id', auth(['admin']), (req, res) => {
 // Static files AFTER all API routes
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all: serve index.html for any non-API route
-app.get('*', (req, res) => {
+// Catch-all: serve index.html for any non-API route (Express 5 syntax)
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

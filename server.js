@@ -25,11 +25,17 @@ let _store = {
   sesiones:     null,
 };
 
+function readJsonFile(filename, fallback) {
+  try { return JSON.parse(fs.readFileSync(path.join(DB_DIR, filename), 'utf8')); }
+  catch { return fallback; }
+}
+
 function initStore() {
   if (IS_VERCEL) {
-    _store.clientes     = [];
-    _store.cotizaciones = [];
-    _store.proyectos    = [];
+    // Vercel: read seed files from the deployed bundle (read-only), writes go to memory
+    _store.clientes     = readJsonFile('clientes.json', []);
+    _store.cotizaciones = readJsonFile('cotizaciones.json', []);
+    _store.proyectos    = readJsonFile('proyectos.json', []);
     _store.sesiones     = {};
     _store.usuarios     = [
       { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() }

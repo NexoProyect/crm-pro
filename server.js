@@ -8,22 +8,30 @@ app.use(express.json());
 
 function hash(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 
-// ── In-memory store (Vercel serverless compatible) ────────────────────────────
-// On local dev, data is read/written to db/*.json files.
-// On Vercel (no persistent FS), data lives in memory per-instance.
 const IS_VERCEL = !!process.env.VERCEL;
 const DB_DIR    = path.join(__dirname, 'db');
-
 const ADMIN_PASS = hash(process.env.ADMIN_PASSWORD || 'admin123');
+// Secret for signing stateless tokens — stable across all Vercel instances
+const TOKEN_SECRET = process.env.TOKEN_SECRET || 'crmpro-secret-2024-nexo';
 
-// Seed data loaded once at cold start
-let _store = {
-  clientes:     null,
-  usuarios:     null,
-  cotizaciones: null,
-  proyectos:    null,
-  sesiones:     null,
-};
+// ── Stateless signed tokens (work across all serverless instances) ────────────
+function signToken(payload) {
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig  = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64url');
+  return `${data}.${sig}`;
+}
+
+function verifyToken(token) {
+  try {
+    const [data, sig] = token.split('.');
+    const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64url');
+    if (sig !== expected) return null;
+    return JSON.parse(Buffer.from(data, 'base64url').toString());
+  } catch { return null; }
+}
+
+// ── In-memory store ────────────────────────────────────────────────────────────
+let _store = { clientes: null, usuarios: null, cotizaciones: null, proyectos: null };
 
 function readJsonFile(filename, fallback) {
   try { return JSON.parse(fs.readFileSync(path.join(DB_DIR, filename), 'utf8')); }
@@ -31,25 +39,16 @@ function readJsonFile(filename, fallback) {
 }
 
 function initStore() {
+  const adminUser = { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() };
   if (IS_VERCEL) {
-    // Vercel: read seed files from the deployed bundle (read-only), writes go to memory
     _store.clientes     = readJsonFile('clientes.json', []);
     _store.cotizaciones = readJsonFile('cotizaciones.json', []);
     _store.proyectos    = readJsonFile('proyectos.json', []);
-    _store.sesiones     = {};
-    _store.usuarios     = [
-      { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() }
-    ];
+    _store.usuarios     = [adminUser];
   } else {
-    // Local: use JSON files
     const defaults = {
-      'clientes.json':     [],
-      'cotizaciones.json': [],
-      'proyectos.json':    [],
-      'sesiones.json':     {},
-      'usuarios.json':     [
-        { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() }
-      ],
+      'clientes.json': [], 'cotizaciones.json': [], 'proyectos.json': [],
+      'usuarios.json': [adminUser],
     };
     if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
     Object.entries(defaults).forEach(([f, d]) => {
@@ -64,22 +63,20 @@ function read(key) {
   if (IS_VERCEL) return _store[key];
   return JSON.parse(fs.readFileSync(path.join(DB_DIR, key + '.json'), 'utf8'));
 }
-
 function write(key, data) {
   if (IS_VERCEL) { _store[key] = data; return; }
   fs.writeFileSync(path.join(DB_DIR, key + '.json'), JSON.stringify(data, null, 2));
 }
 
-// ── Auth middleware ───────────────────────────────────────────────────────────
+// ── Auth middleware ────────────────────────────────────────────────────────────
 function auth(roles = []) {
   return (req, res, next) => {
-    const token = req.headers['x-token'];
-    if (!token) return res.status(401).json({ error: 'No autenticado' });
-    const sesiones = read('sesiones');
-    const uid = sesiones[token];
-    if (!uid) return res.status(401).json({ error: 'Sesión inválida' });
+    const raw = req.headers['x-token'];
+    if (!raw) return res.status(401).json({ error: 'No autenticado' });
+    const payload = verifyToken(raw);
+    if (!payload) return res.status(401).json({ error: 'Token inválido' });
     const usuarios = read('usuarios');
-    const user = usuarios.find(u => u.id === uid && u.activo);
+    const user = usuarios.find(u => u.id === payload.id && u.activo);
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
     if (roles.length && !roles.includes(user.rol)) return res.status(403).json({ error: 'Sin permiso' });
     req.user = user;
@@ -87,24 +84,18 @@ function auth(roles = []) {
   };
 }
 
-// ── AUTH ─────────────────────────────────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
   const usuarios = read('usuarios');
   const user = usuarios.find(u => u.email === email && u.password === hash(password) && u.activo);
   if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' });
-  const token = crypto.randomBytes(32).toString('hex');
-  const sesiones = read('sesiones');
-  sesiones[token] = user.id;
-  write('sesiones', sesiones);
+  const token = signToken({ id: user.id, rol: user.rol });
   res.json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, avatar: user.avatar } });
 });
 
-app.post('/api/logout', auth(), (req, res) => {
-  const token = req.headers['x-token'];
-  const sesiones = read('sesiones');
-  delete sesiones[token];
-  write('sesiones', sesiones);
+app.post('/api/logout', (req, res) => {
+  // Stateless tokens: logout is handled client-side by deleting the token
   res.json({ ok: true });
 });
 

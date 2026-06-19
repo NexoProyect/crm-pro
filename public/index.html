@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CRM Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--surface2:#1a2236;--border:#1f2d45;
+  --accent:#6366f1;--accent2:#818cf8;--green:#10b981;--yellow:#f59e0b;
+  --red:#ef4444;--blue:#3b82f6;--purple:#a855f7;
+  --text:#f1f5f9;--muted:#64748b;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 44px;width:100%;max-width:400px;box-shadow:var(--shadow)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px;justify-content:center}
+.login-logo-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px}
+.login-logo-text{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.login-logo-text span{color:var(--accent2)}
+.login-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.form-input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--muted)}
+.form-select{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;outline:none}
+.login-err{color:var(--red);font-size:13px;margin-bottom:12px;display:none}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 14px;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;padding:0 8px}
+.logo-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-text{font-size:17px;font-weight:700}.logo-text span{color:var(--accent2)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:3px;user-select:none}
+.nav-item:hover{background:rgba(99,102,241,.08);color:var(--text)}
+.nav-item.active{background:rgba(99,102,241,.18);color:var(--accent2)}
+.nav-item.hidden{display:none}
+.nav-icon{font-size:15px;width:19px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sidebar-footer{margin-top:auto;padding:11px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.user-name{font-size:12px;font-weight:600}
+.user-role{font-size:10px;color:var(--muted)}
+.logout-btn{margin-left:auto;cursor:pointer;color:var(--muted);font-size:15px;transition:color .2s}
+.logout-btn:hover{color:var(--red)}
+
+/* MAIN */
+.main{margin-left:220px;padding:30px 34px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.header-left h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+.header-left p{color:var(--muted);font-size:13px;margin-top:2px}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+.btn-success{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}.btn-success:hover{background:rgba(16,185,129,.25)}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}.btn-danger:hover{background:rgba(239,68,68,.22)}
+.btn-warning{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}.btn-warning:hover{background:rgba(245,158,11,.25)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.metric-card.c1::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.metric-card.c2::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.metric-card.c3::before{background:linear-gradient(90deg,var(--yellow),#fcd34d)}
+.metric-card.c4::before{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+.metric-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.6px}
+.metric-value{font-size:30px;font-weight:800;margin:6px 0 3px;letter-spacing:-1px}
+.metric-sub{font-size:11px;color:var(--muted)}
+.metric-icon{position:absolute;right:16px;top:16px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.c1 .metric-icon{background:rgba(99,102,241,.15)}.c2 .metric-icon{background:rgba(16,185,129,.15)}
+.c3 .metric-icon{background:rgba(245,158,11,.15)}.c4 .metric-icon{background:rgba(59,130,246,.15)}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:14px;font-weight:700}
+.panel-body{padding:18px 20px}
+.content-row{display:grid;grid-template-columns:1fr 250px;gap:18px;align-items:start}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap input{width:100%;padding:8px 14px 8px 34px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
+.filter-select{padding:8px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;cursor:pointer;outline:none}
+.count-badge{font-size:12px;color:var(--muted);white-space:nowrap;margin-left:auto}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 13px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody td{padding:11px 13px;font-size:13px;vertical-align:middle}
+.client-name{font-weight:600}.client-id{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-critico{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.badge-confirmado{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.badge-medio{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.badge-leve{background:rgba(99,102,241,.15);color:var(--accent2);border:1px solid rgba(99,102,241,.3)}
+.badge-admin{background:rgba(168,85,247,.15);color:#d8b4fe;border:1px solid rgba(168,85,247,.3)}
+.badge-vendedor{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.badge-soporte{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.badge-desarrollador{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.badge-activo{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.badge-inactivo{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+
+/* INLINE INPUTS */
+.cell-input{width:100%;padding:5px 9px;background:var(--surface2);border:1px solid transparent;border-radius:6px;color:var(--text);font-size:13px;outline:none;transition:all .2s}
+.cell-input:hover{border-color:var(--border)}.cell-input:focus{border-color:var(--accent);background:var(--bg)}
+.cell-select{width:100%;padding:5px 9px;background:var(--surface2);border:1px solid transparent;border-radius:6px;color:var(--text);font-size:13px;cursor:pointer;outline:none;transition:all .2s}
+.cell-select:hover{border-color:var(--border)}.cell-select:focus{border-color:var(--accent)}
+.estado-wrap{display:flex;align-items:center;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* CHART */
+.chart-wrap{padding:18px;display:flex;align-items:center;justify-content:center}
+#g{max-width:190px;max-height:190px}
+.legend{padding:0 18px 18px}
+.legend-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.legend-item:last-child{border-bottom:none}
+.legend-dot{width:9px;height:9px;border-radius:3px;margin-right:7px;flex-shrink:0}
+.legend-label{display:flex;align-items:center;color:var(--muted)}
+.legend-count{font-weight:700}
+
+/* COTIZACIONES */
+.cot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;transition:border-color .2s}
+.cot-card:hover{border-color:var(--accent)}
+.cot-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:12px}
+.cot-titulo{font-size:15px;font-weight:700}
+.cot-cliente{font-size:12px;color:var(--muted);margin-top:3px}
+.cot-body{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.cot-field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.cot-field span{font-size:13px;font-weight:500}
+.cot-notas{background:var(--surface2);border-radius:8px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;white-space:pre-wrap}
+.cot-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cot-estado-borrador{color:var(--muted)}
+.cot-estado-enviada{color:var(--yellow)}
+.cot-estado-aceptada{color:var(--green)}
+.cot-estado-rechazada{color:var(--red)}
+
+/* PROYECTOS DEV */
+.proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s}
+.proj-card:hover{border-color:var(--accent)}
+.proj-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.proj-nombre{font-size:14px;font-weight:700}
+.proj-cliente{font-size:12px;color:var(--muted);margin-top:2px}
+.proj-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.proj-meta-item label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.proj-meta-item span{font-size:12px;font-weight:500}
+.proj-notas{background:var(--surface2);border-radius:7px;padding:10px;font-size:12px;color:var(--muted);line-height:1.5;max-height:80px;overflow:hidden}
+.proj-progress{background:var(--border);border-radius:4px;height:6px;overflow:hidden}
+.proj-progress-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.proj-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.proj-dev{font-size:11px;color:var(--muted)}
+
+/* STATUS BADGES */
+.s-pendiente{color:var(--muted)}
+.s-en-progreso{color:var(--yellow)}
+.s-revision{color:var(--blue)}
+.s-completado{color:var(--green)}
+.s-pausado{color:var(--red)}
+
+/* MENSAJES / CHAT */
+.msg-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px 18px}
+.msg-bubble{padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.5;max-width:85%}
+.msg-admin,.msg-vendedor{background:rgba(99,102,241,.15);align-self:flex-start}
+.msg-desarrollador{background:rgba(245,158,11,.12);align-self:flex-end}
+.msg-soporte{background:rgba(59,130,246,.12);align-self:flex-start}
+.msg-solicitud{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);align-self:flex-end}
+.msg-meta{font-size:10px;color:var(--muted);margin-bottom:4px}
+.msg-input-row{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border)}
+.msg-input{flex:1;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none}
+.msg-input:focus{border-color:var(--accent)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{cursor:pointer;color:var(--muted);font-size:20px;line-height:1;transition:color .2s}.modal-close:hover{color:var(--text)}
+.modal-body{padding:22px 24px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+.items-table{width:100%;border-collapse:collapse;margin-bottom:12px}
+.items-table th{padding:8px 10px;font-size:11px;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)}
+.items-table td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border)}
+.items-table input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:5px 8px;width:100%;outline:none}
+.total-row{display:flex;justify-content:flex-end;align-items:center;gap:10px;font-size:15px;font-weight:700;margin-top:8px}
+.total-amount{color:var(--green);font-size:20px}
+
+/* USUARIOS */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px}
+.user-card-header{display:flex;align-items:center;gap:12px}
+.avatar-lg{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.user-card-name{font-size:14px;font-weight:700}
+.user-card-email{font-size:12px;color:var(--muted)}
+.user-card-actions{display:flex;gap:8px}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty p{font-size:13px}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--green);color:var(--text);padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow);display:none;z-index:9999;animation:slideIn .25s ease}
+@keyframes slideIn{from{transform:translateY(10px);opacity:0}}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.tab{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;user-select:none}
+.tab:hover{color:var(--text)}.tab.active{background:rgba(99,102,241,.15);color:var(--accent2)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ROL COLORS */
+.rol-admin{color:#d8b4fe}.rol-vendedor{color:#6ee7b7}.rol-soporte{color:#93c5fd}.rol-desarrollador{color:#fcd34d}
+
+/* PERMISOS INFO */
+.perm-box{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--accent2)}
+
+/* PROGRESS INPUT */
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+@media(max-width:1100px){.content-row,.proj-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:18px 14px}.metrics{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">📊</div>
+      <div class="login-logo-text">CRM<span>Pro</span></div>
+    </div>
+    <div class="login-title">Iniciar sesión</div>
+    <div class="login-sub">Accede con tu cuenta de equipo</div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" id="loginEmail" type="email" placeholder="correo@empresa.com"></div>
+    <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" id="loginPass" type="password" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px" onclick="doLogin()">Entrar →</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar" style="display:none">
+  <div class="logo"><div class="logo-icon">📊</div><div class="logo-text">CRM<span>Pro</span></div></div>
+  <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+  <div class="nav-item" data-page="clientes" data-roles="admin,vendedor,soporte"><span class="nav-icon">👥</span> Clientes</div>
+  <div class="nav-item" data-page="cotizaciones" data-roles="admin,vendedor,soporte"><span class="nav-icon">📄</span> Cotizaciones</div>
+  <div class="nav-item" data-page="proyectos" data-roles="admin,vendedor,desarrollador,soporte"><span class="nav-icon">💻</span> Proyectos Dev</div>
+  <div class="nav-item" data-page="seguimiento" data-roles="admin,vendedor,soporte"><span class="nav-icon">📋</span> Seguimiento</div>
+  <div class="nav-item" data-page="reportes" data-roles="admin,vendedor"><span class="nav-icon">📈</span> Reportes</div>
+  <div class="nav-item" data-page="usuarios" data-roles="admin"><span class="nav-icon">👤</span> Usuarios</div>
+  <div class="nav-item" data-page="configuracion" data-roles="admin"><span class="nav-icon">⚙️</span> Configuración</div>
+  <div class="sidebar-footer">
+    <div class="avatar" id="sideAvatar">--</div>
+    <div class="user-info"><div class="user-name" id="sideNombre">—</div><div class="user-role" id="sideRol">—</div></div>
+    <div class="logout-btn" onclick="doLogout()" title="Cerrar sesión">⏻</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="mainArea" style="display:none">
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="header">
+    <div class="header-left"><h1>Dashboard</h1><p>Resumen general</p></div>
+    <div class="header-actions" id="dashActions">
+      <button class="btn btn-success" onclick="exportExcel()">📊 Excel</button>
+      <button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button>
+      <button class="btn btn-primary" onclick="nuevo()">＋ Cliente</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="t">—</div><div class="metric-sub">prospectos</div></div>
+    <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="c">—</div><div class="metric-sub">confirmados</div></div>
+    <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="cv">—</div><div class="metric-sub">tasa</div></div>
+    <div class="metric-card c4"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="s">—</div><div class="metric-sub">activos</div></div>
+  </div>
+  <div class="content-row">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Clientes</span></div>
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-icon">🔍</span><input id="q" placeholder="Buscar…"></div>
+        <select class="filter-select" id="f"><option>Todos</option><option>Critico</option><option>Medio</option><option>Leve</option><option>Confirmado</option></select>
+        <span class="count-badge" id="cnt"></span>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th><th></th></tr></thead>
+        <tbody id="tb"></tbody></table>
+        <div id="empty" class="empty" style="display:none"><div class="empty-icon">🔍</div><p>Sin resultados</p></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Distribución</span></div>
+      <div class="chart-wrap"><canvas id="g"></canvas></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CLIENTES ═══════════ -->
+<div class="page" id="page-clientes">
+  <div class="header">
+    <div class="header-left"><h1>Clientes</h1><p>Gestión completa de prospectos</p></div>
+    <div class="header-actions">
+      <button class="btn btn-success" onclick="exportExcel()">📊 Excel</button>
+      <button class="btn btn-secondary" onclick="guardar()" id="btnGuardarCli">💾 Guardar</button>
+      <button class="btn btn-primary" onclick="nuevo()" id="btnNuevoCli">＋ Nuevo</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="toolbar">
+      <div class="search-wrap"><span class="search-icon">🔍</span><input id="q2" placeholder="Buscar…"></div>
+      <select class="filter-select" id="f2"><option>Todos</option><option>Critico</option><option>Medio</option><option>Leve</option><option>Confirmado</option></select>
+      <select class="filter-select" id="fe"><option value="">Todos los estados</option><option>Sin contactar</option><option>Llamado</option><option>WhatsApp</option><option>Seguimiento</option><option>Cliente</option><option>Mayor prioridad</option></select>
+      <span class="count-badge" id="cnt2"></span>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th><th></th></tr></thead>
+      <tbody id="tb2"></tbody></table>
+      <div id="empty2" class="empty" style="display:none"><div class="empty-icon">👥</div><p>Sin clientes</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COTIZACIONES ═══════════ -->
+<div class="page" id="page-cotizaciones">
+  <div class="header">
+    <div class="header-left"><h1>Cotizaciones</h1><p>Propuestas y casos de estudio por cliente</p></div>
+    <div class="header-actions" id="cotActions">
+      <button class="btn btn-primary" onclick="abrirModalCot()">＋ Nueva Cotización</button>
+    </div>
+  </div>
+  <div class="perm-box" id="cotPermBox" style="display:none">👁 Modo lectura — solo Admin y Vendedor pueden crear cotizaciones.</div>
+  <div id="cotList"></div>
+  <div id="emptyCot" class="empty" style="display:none"><div class="empty-icon">📄</div><p>No hay cotizaciones aún.</p></div>
+</div>
+
+<!-- ═══════════ PROYECTOS DEV ═══════════ -->
+<div class="page" id="page-proyectos">
+  <div class="header">
+    <div class="header-left"><h1>Proyectos Dev</h1><p>Panel de desarrollo web por cliente</p></div>
+    <div class="header-actions" id="projActions">
+      <button class="btn btn-primary" id="btnNuevoProj" onclick="abrirModalProj()">＋ Nuevo Proyecto</button>
+    </div>
+  </div>
+  <div class="perm-box" id="projPermBox" style="display:none"></div>
+  <div class="toolbar" style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)">
+    <div class="search-wrap"><span class="search-icon">🔍</span><input id="qProj" placeholder="Buscar proyecto…"></div>
+    <select class="filter-select" id="fProjStatus"><option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="en-progreso">En progreso</option><option value="revision">En revisión</option><option value="completado">Completado</option><option value="pausado">Pausado</option></select>
+  </div>
+  <div class="proj-grid" id="projGrid"></div>
+  <div id="emptyProj" class="empty" style="display:none"><div class="empty-icon">💻</div><p>No hay proyectos aún.</p></div>
+</div>
+
+<!-- ═══════════ SEGUIMIENTO ═══════════ -->
+<div class="page" id="page-seguimiento">
+  <div class="header">
+    <div class="header-left"><h1>Seguimiento</h1><p>Clientes que requieren acción</p></div>
+    <div class="header-actions"><button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button></div>
+  </div>
+  <div class="metrics" style="margin-bottom:20px">
+    <div class="metric-card c4"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="segCount">—</div><div class="metric-sub">activos</div></div>
+    <div class="metric-card c1"><div class="metric-icon">🚨</div><div class="metric-label">Alta Prioridad</div><div class="metric-value" id="segAlta">—</div><div class="metric-sub">urgentes</div></div>
+    <div class="metric-card c3"><div class="metric-icon">📞</div><div class="metric-label">Sin Contactar</div><div class="metric-value" id="segSin">—</div><div class="metric-sub">nunca</div></div>
+    <div class="metric-card c2"><div class="metric-icon">💬</div><div class="metric-label">Contactados</div><div class="metric-value" id="segCon">—</div><div class="metric-sub">llamado/WA</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Pendientes</span>
+      <select class="filter-select" id="fseg" style="font-size:12px;padding:5px 9px"><option value="">Todos</option><option value="Seguimiento">Seguimiento</option><option value="Mayor prioridad">Mayor Prioridad</option><option value="Sin contactar">Sin Contactar</option></select>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th></tr></thead>
+      <tbody id="tbSeg"></tbody></table>
+      <div id="emptySeg" class="empty" style="display:none"><div class="empty-icon">✅</div><p>¡Sin pendientes!</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REPORTES ═══════════ -->
+<div class="page" id="page-reportes">
+  <div class="header">
+    <div class="header-left"><h1>Reportes</h1><p>Análisis de datos</p></div>
+    <div class="header-actions"><button class="btn btn-success" onclick="exportExcel()">📊 Exportar Excel</button></div>
+  </div>
+  <div class="metrics" style="margin-bottom:20px">
+    <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="rTotal">—</div><div class="metric-sub">prospectos</div></div>
+    <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="rClientes">—</div><div class="metric-sub">activos</div></div>
+    <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="rConv">—</div><div class="metric-sub">tasa</div></div>
+    <div class="metric-card c4"><div class="metric-icon">💰</div><div class="metric-label">Cotizaciones</div><div class="metric-value" id="rCots">—</div><div class="metric-sub">creadas</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="panel"><div class="panel-header"><span class="panel-title">Por Grupo</span></div><div style="padding:20px;height:240px"><canvas id="chartBar"></canvas></div></div>
+    <div class="panel"><div class="panel-header"><span class="panel-title">Por Estado</span></div><div style="padding:20px;height:240px"><canvas id="chartPie"></canvas></div></div>
+  </div>
+  <div class="panel"><div class="panel-header"><span class="panel-title">Resumen por Estado</span></div><div class="panel-body"><table><thead><tr><th>Estado</th><th>Cantidad</th><th>% del Total</th></tr></thead><tbody id="tbEstados"></tbody></table></div></div>
+</div>
+
+<!-- ═══════════ USUARIOS ═══════════ -->
+<div class="page" id="page-usuarios">
+  <div class="header">
+    <div class="header-left"><h1>Usuarios</h1><p>Gestión de accesos y roles del equipo</p></div>
+    <div class="header-actions"><button class="btn btn-primary" onclick="abrirModalUsuario()">＋ Nuevo Usuario</button></div>
+  </div>
+  <div class="perm-box">🔒 Solo tú (Admin) puedes ver y gestionar usuarios. Los roles controlan qué puede hacer cada persona en el CRM.</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Tabla de permisos por rol</div>
+    <table style="font-size:12px">
+      <thead><tr><th>Función</th><th>Admin</th><th>Vendedor</th><th>Soporte</th><th>Desarrollador</th></tr></thead>
+      <tbody>
+        <tr><td>Ver clientes</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>Editar/crear clientes</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Crear cotizaciones</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Ver cotizaciones</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>Crear proyectos dev</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Gestionar proyectos dev</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Reportes</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Gestionar usuarios</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Configuración</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="user-grid" id="userGrid"></div>
+</div>
+
+<!-- ═══════════ CONFIGURACIÓN ═══════════ -->
+<div class="page" id="page-configuracion">
+  <div class="header"><div class="header-left"><h1>Configuración</h1><p>Ajustes del sistema</p></div></div>
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:20px">
+    <div class="panel" style="overflow:visible">
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:3px">
+        <div class="tab active" data-cfg="perfil">👤 Perfil</div>
+        <div class="tab" data-cfg="datos">🗄️ Datos</div>
+        <div class="tab" data-cfg="apariencia">🎨 Apariencia</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-body">
+        <div id="cfg-perfil" class="tab-content active">
+          <div style="font-size:15px;font-weight:700;margin-bottom:14px">Perfil</div>
+          <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="cfgNombre" value="Johangel"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cfgEmail" value="sm8contact@gmail.com"></div>
+          <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" id="cfgPass" type="password" placeholder="Dejar vacío para no cambiar"></div>
+          <button class="btn btn-primary" onclick="showToast('✅ Perfil actualizado')">Guardar</button>
+        </div>
+        <div id="cfg-datos" class="tab-content">
+          <div style="font-size:15px;font-weight:700;margin-bottom:14px">Datos</div>
+          <div class="form-group"><label class="form-label">Exportar</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-success" onclick="exportExcel()">📊 Excel</button>
+              <button class="btn btn-secondary" onclick="exportJson()">⬇ JSON</button>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:18px;margin-top:16px">
+            <div style="color:var(--red);font-size:14px;font-weight:700;margin-bottom:8px">⚠️ Zona de peligro</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Elimina todos los clientes permanentemente.</p>
+            <button class="btn btn-danger" style="padding:8px 16px;font-size:13px" onclick="confirmarLimpiar()">🗑️ Limpiar datos</button>
+          </div>
+        </div>
+        <div id="cfg-apariencia" class="tab-content">
+          <div style="font-size:15px;font-weight:700;margin-bottom:14px">Apariencia</div>
+          <div class="form-group"><label class="form-label">Color de acento</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <div onclick="setAccent('#6366f1')" style="width:30px;height:30px;border-radius:8px;background:#6366f1;cursor:pointer;border:2px solid white"></div>
+              <div onclick="setAccent('#10b981')" style="width:30px;height:30px;border-radius:8px;background:#10b981;cursor:pointer"></div>
+              <div onclick="setAccent('#3b82f6')" style="width:30px;height:30px;border-radius:8px;background:#3b82f6;cursor:pointer"></div>
+              <div onclick="setAccent('#f59e0b')" style="width:30px;height:30px;border-radius:8px;background:#f59e0b;cursor:pointer"></div>
+              <div onclick="setAccent('#ef4444')" style="width:30px;height:30px;border-radius:8px;background:#ef4444;cursor:pointer"></div>
+              <div onclick="setAccent('#a855f7')" style="width:30px;height:30px;border-radius:8px;background:#a855f7;cursor:pointer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ════ MODAL COTIZACIÓN ════ -->
+<div class="modal-overlay" id="modalCot">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="modalCotTitle">Nueva Cotización</span><span class="modal-close" onclick="cerrarModal('modalCot')">×</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="cotId">
+      <div class="form-group"><label class="form-label">Cliente</label>
+        <select class="form-select" id="cotCliente"></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Tipo de proyecto</label>
+          <select class="form-select" id="cotTipo">
+            <option>Sitio web corporativo</option><option>Tienda en línea</option><option>Landing page</option>
+            <option>Aplicación web</option><option>Rediseño web</option><option>SEO y marketing</option><option>Personalizado</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Estado</label>
+          <select class="form-select" id="cotEstado"><option value="borrador">Borrador</option><option value="enviada">Enviada</option><option value="aceptada">Aceptada</option><option value="rechazada">Rechazada</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Caso de estudio / Notas personalizadas</label>
+        <textarea class="form-input" id="cotNotas" rows="4" placeholder="Describe el caso de este cliente: necesidades, referencias, observaciones…" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group"><label class="form-label">Ítems del presupuesto</label>
+        <table class="items-table">
+          <thead><tr><th style="width:50%">Descripción</th><th>Cant.</th><th>Precio unit.</th><th>Total</th><th></th></tr></thead>
+          <tbody id="cotItems"></tbody>
+        </table>
+        <button class="btn btn-secondary btn-sm" onclick="addCotItem()">＋ Añadir ítem</button>
+      </div>
+      <div class="total-row">Total: <span class="total-amount" id="cotTotal">$0.00</span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalCot')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCot()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL PROYECTO ════ -->
+<div class="modal-overlay" id="modalProj">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="modalProjTitle">Nuevo Proyecto</span><span class="modal-close" onclick="cerrarModal('modalProj')">×</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="projId">
+      <div class="form-group"><label class="form-label">Cliente</label><select class="form-select" id="projCliente"></select></div>
+      <div class="form-group"><label class="form-label">Nombre del proyecto</label><input class="form-input" id="projNombre" placeholder="Ej: Web Corporativa Karibo"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="projTipo"><option>Sitio web corporativo</option><option>Tienda en línea</option><option>Landing page</option><option>App web</option><option>Rediseño</option><option>SEO</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Dev asignado</label>
+          <select class="form-select" id="projDev"><option value="">Sin asignar</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Notas de estudio para el dev</label>
+        <textarea class="form-input" id="projNotasDev" rows="4" placeholder="Referencias de diseño, funcionalidades requeridas, estilo, colores, ejemplos de webs similares, observaciones del cliente…" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Estado</label>
+          <select class="form-select" id="projEstado"><option value="pendiente">Pendiente</option><option value="en-progreso">En progreso</option><option value="revision">En revisión</option><option value="completado">Completado</option><option value="pausado">Pausado</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Progreso: <span id="progLabel">0</span>%</label>
+          <input type="range" id="projProgreso" min="0" max="100" value="0" oninput="document.getElementById('progLabel').textContent=this.value">
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Fecha límite</label><input class="form-input" id="projFechaLimite" type="date"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalProj')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProj()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL PROYECTO DETALLE ════ -->
+<div class="modal-overlay" id="modalProjDetail">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-header"><span class="modal-title" id="detailTitle">Proyecto</span><span class="modal-close" onclick="cerrarModal('modalProjDetail')">×</span></div>
+    <div class="tabs" id="detailTabs">
+      <div class="tab active" data-dtab="info">📋 Info</div>
+      <div class="tab" data-dtab="chat">💬 Chat</div>
+    </div>
+    <div id="dtab-info" class="tab-content active">
+      <div class="panel-body" id="detailInfo"></div>
+    </div>
+    <div id="dtab-chat" class="tab-content">
+      <div class="msg-list" id="msgList"></div>
+      <div class="msg-input-row">
+        <select class="filter-select" id="msgTipo" style="font-size:12px;padding:6px 10px">
+          <option value="mensaje">💬 Mensaje</option>
+          <option value="solicitud">🔴 Solicitar info</option>
+          <option value="cambio">🟢 Mostrar cambio</option>
+        </select>
+        <input class="msg-input" id="msgTexto" placeholder="Escribe un mensaje…">
+        <button class="btn btn-primary btn-sm" onclick="enviarMensaje()">Enviar</button>
+      </div>
+    </div>
+    <div class="modal-footer" id="detailFooter"></div>
+  </div>
+</div>
+
+<!-- ════ MODAL USUARIO ════ -->
+<div class="modal-overlay" id="modalUser">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><span class="modal-title" id="modalUserTitle">Nuevo Usuario</span><span class="modal-close" onclick="cerrarModal('modalUser')">×</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="userId">
+      <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="userNombre" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="userEmail" type="email" placeholder="correo@empresa.com"></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" id="userPass" type="password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group"><label class="form-label">Rol</label>
+        <select class="form-select" id="userRol">
+          <option value="vendedor">Vendedor</option>
+          <option value="soporte">Soporte</option>
+          <option value="desarrollador">Desarrollador</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div id="userErr" style="color:var(--red);font-size:13px;margin-top:8px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalUser')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarUsuario()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let SESSION = { token: null, user: null };
+let clientes = [], cotizaciones = [], proyectos = [], usuarios = [];
+let chartDoughnut, chartBar, chartPie;
+let currentProjId = null;
+
+const ESTADOS = ['Sin contactar','Llamado','WhatsApp','Seguimiento','Cliente','Mayor prioridad'];
+const ESTADO_COLORS = {'Sin contactar':'#64748b','Llamado':'#3b82f6','WhatsApp':'#10b981','Seguimiento':'#f59e0b','Cliente':'#6366f1','Mayor prioridad':'#ef4444'};
+const GRUPO_COLORS  = {'Critico':'#ef4444','Confirmado':'#10b981','Medio':'#f59e0b','Leve':'#6366f1'};
+const BADGE_CLASS   = {'Critico':'badge-critico','Confirmado':'badge-confirmado','Medio':'badge-medio','Leve':'badge-leve'};
+const ROL_LABELS    = {'admin':'Admin','vendedor':'Vendedor','soporte':'Soporte','desarrollador':'Desarrollador'};
+const PROJ_STATUS_LABEL = {'pendiente':'Pendiente','en-progreso':'En progreso','revision':'En revisión','completado':'Completado','pausado':'Pausado'};
+const PROJ_STATUS_CLASS = {'pendiente':'s-pendiente','en-progreso':'s-en-progreso','revision':'s-revision','completado':'s-completado','pausado':'s-pausado'};
+
+// ═══════════════════════════════════════════════════
+// API HELPER
+// ═══════════════════════════════════════════════════
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'x-token': SESSION.token || '' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (r.status === 401) { doLogout(); return null; }
+  return r.json();
+}
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  err.style.display = 'none';
+  if (!email || !pass) { err.textContent = 'Completa todos los campos.'; err.style.display = 'block'; return; }
+  const data = await api('POST', '/api/login', { email, password: pass });
+  if (!data || data.error) { err.textContent = data?.error || 'Error de conexión'; err.style.display = 'block'; return; }
+  SESSION = { token: data.token, user: data.user };
+  localStorage.setItem('crm_token', data.token);
+  iniciarApp();
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogout() {
+  if (SESSION.token) await api('POST', '/api/logout');
+  SESSION = { token: null, user: null };
+  localStorage.removeItem('crm_token');
+  location.reload();
+}
+
+async function tryAutoLogin() {
+  const saved = localStorage.getItem('crm_token');
+  if (!saved) return;
+  SESSION.token = saved;
+  const data = await api('GET', '/api/me');
+  if (data && !data.error) { SESSION.user = data; iniciarApp(); }
+  else { SESSION.token = null; localStorage.removeItem('crm_token'); }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT APP
+// ═══════════════════════════════════════════════════
+async function iniciarApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('sidebar').style.display = 'flex';
+  document.getElementById('mainArea').style.display = 'block';
+
+  const u = SESSION.user;
+  document.getElementById('sideAvatar').textContent = u.avatar || u.nombre.slice(0,2).toUpperCase();
+  document.getElementById('sideNombre').textContent = u.nombre;
+  document.getElementById('sideRol').textContent    = ROL_LABELS[u.rol] || u.rol;
+
+  // Show/hide nav by role
+  document.querySelectorAll('.nav-item[data-roles]').forEach(item => {
+    const allowed = item.dataset.roles.split(',');
+    if (!allowed.includes(u.rol)) item.classList.add('hidden');
+  });
+
+  // Apply role-based UI restrictions
+  applyRoleUI();
+
+  // Load data
+  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos()]);
+  if (u.rol === 'admin') await loadUsuarios();
+
+  render();
+}
+
+function applyRoleUI() {
+  const rol = SESSION.user.rol;
+  // Dashboard buttons
+  if (rol === 'soporte' || rol === 'desarrollador') {
+    document.getElementById('dashActions').innerHTML = '';
+  }
+  // Clientes write
+  if (rol === 'soporte' || rol === 'desarrollador') {
+    const bc = document.getElementById('btnGuardarCli');
+    const bn = document.getElementById('btnNuevoCli');
+    if (bc) bc.style.display = 'none';
+    if (bn) bn.style.display = 'none';
+  }
+  // Cotizaciones
+  if (rol !== 'admin' && rol !== 'vendedor') {
+    document.getElementById('cotActions').style.display = 'none';
+    document.getElementById('cotPermBox').style.display = 'block';
+  }
+  // Proyectos
+  if (rol === 'desarrollador') {
+    document.getElementById('btnNuevoProj').style.display = 'none';
+    document.getElementById('projPermBox').textContent = '🛠 Modo dev — puedes actualizar estado, progreso y chatear en los proyectos asignados.';
+    document.getElementById('projPermBox').style.display = 'block';
+  }
+  if (rol === 'soporte') {
+    document.getElementById('btnNuevoProj').style.display = 'none';
+    document.getElementById('projPermBox').textContent = '👁 Modo soporte — puedes ver proyectos y chatear.';
+    document.getElementById('projPermBox').style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════
+document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + item.dataset.page).classList.add('active');
+    const pg = item.dataset.page;
+    if (pg === 'reportes')    renderReportes();
+    if (pg === 'seguimiento') renderSeguimiento();
+    if (pg === 'clientes')    renderClientes();
+    if (pg === 'cotizaciones')renderCotizaciones();
+    if (pg === 'proyectos')   renderProyectos();
+    if (pg === 'usuarios')    renderUsuarios();
+  });
+});
+
+// Config tabs
+document.querySelectorAll('[data-cfg]').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('[data-cfg]').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('cfg-' + t.dataset.cfg).classList.add('active');
+  });
+});
+
+// Detail tabs
+document.querySelectorAll('[data-dtab]').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('[data-dtab]').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('[id^="dtab-"]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('dtab-' + t.dataset.dtab).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════
+async function loadClientes()     { const d = await api('GET','/api/clientes');     if (d) clientes = d; }
+async function loadCotizaciones() { const d = await api('GET','/api/cotizaciones'); if (d) cotizaciones = d; }
+async function loadProyectos()    { const d = await api('GET','/api/proyectos');    if (d) proyectos = d; }
+async function loadUsuarios()     { const d = await api('GET','/api/usuarios');     if (d) usuarios = d; }
+
+// ═══════════════════════════════════════════════════
+// RENDER TABLE HELPER
+// ═══════════════════════════════════════════════════
+function renderTable(tbId, emptyId, cntId, q, grupo, estado) {
+  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+  const filtered = clientes.map((x,i) => ({...x,_idx:i})).filter(x =>
+    (grupo === 'Todos' || x.grupo === grupo) &&
+    (!estado || x.estado === estado) &&
+    x.nombre.toLowerCase().includes(q)
+  );
+  const tb    = document.getElementById(tbId);
+  const empty = document.getElementById(emptyId);
+  tb.innerHTML = '';
+  if (filtered.length === 0) { empty.style.display='block'; }
+  else {
+    empty.style.display = 'none';
+    filtered.forEach(x => {
+      const i = x._idx;
+      const row = document.createElement('tr');
+      if (canEdit) {
+        row.innerHTML = `
+          <td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
+          <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+          <td><div class="estado-wrap"><span class="dot" style="background:${ESTADO_COLORS[x.estado]||'#64748b'}"></span>
+            <select class="cell-select" data-idx="${i}" data-field="estado">
+              ${ESTADOS.map(e=>`<option${e===x.estado?' selected':''}>${e}</option>`).join('')}
+            </select></div></td>
+          <td><input class="cell-input" data-idx="${i}" data-field="proximaAccion" value="${escAttr(x.proximaAccion||'')}" placeholder="—"></td>
+          <td><input class="cell-input" data-idx="${i}" data-field="notas" value="${escAttr(x.notas||'')}" placeholder="—"></td>
+          <td><button class="btn btn-danger btn-sm" data-del="${i}">✕</button></td>`;
+      } else {
+        row.innerHTML = `
+          <td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
+          <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+          <td><div class="estado-wrap"><span class="dot" style="background:${ESTADO_COLORS[x.estado]||'#64748b'}"></span><span>${escHtml(x.estado)}</span></div></td>
+          <td style="color:var(--muted)">${escHtml(x.proximaAccion||'—')}</td>
+          <td style="color:var(--muted)">${escHtml(x.notas||'—')}</td>
+          <td></td>`;
+      }
+      tb.appendChild(row);
+    });
+  }
+  if (cntId) document.getElementById(cntId).textContent = `${filtered.length} resultado${filtered.length!==1?'s':''}`;
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+function render() {
+  const q = document.getElementById('q').value.toLowerCase();
+  const f = document.getElementById('f').value;
+  renderTable('tb','empty','cnt',q,f,'');
+  updateStats(); graf();
+}
+
+function updateStats() {
+  const total = clientes.length, cli = clientes.filter(x=>x.estado==='Cliente').length;
+  document.getElementById('t').textContent  = total;
+  document.getElementById('c').textContent  = cli;
+  document.getElementById('cv').textContent = ((cli/Math.max(total,1))*100).toFixed(1)+'%';
+  document.getElementById('s').textContent  = clientes.filter(x=>x.estado==='Seguimiento').length;
+}
+
+function graf() {
+  const d = {};
+  clientes.forEach(x => d[x.grupo]=(d[x.grupo]||0)+1);
+  const labels=Object.keys(d), values=Object.values(d), colors=labels.map(l=>GRUPO_COLORS[l]||'#6366f1');
+  if (chartDoughnut) chartDoughnut.destroy();
+  chartDoughnut = new Chart(document.getElementById('g'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:5}]},options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}`}}}}});
+  document.getElementById('legend').innerHTML = labels.length
+    ? labels.map((l,i)=>`<div class="legend-item"><span class="legend-label"><span class="legend-dot" style="background:${colors[i]}"></span>${l}</span><span class="legend-count">${values[i]}</span></div>`).join('')
+    : '<p style="color:var(--muted);font-size:13px;text-align:center">Sin datos</p>';
+}
+
+['tb','tb2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', e => {
+    const t=e.target,idx=t.dataset.idx,field=t.dataset.field;
+    if (idx!==undefined&&field) { clientes[idx][field]=t.value; if(field==='estado'){const d=t.closest('.estado-wrap')?.querySelector('.dot');if(d)d.style.background=ESTADO_COLORS[t.value]||'#64748b';} }
+  });
+  el.addEventListener('input', e => { const t=e.target; if(t.tagName==='INPUT'&&t.dataset.idx!==undefined&&t.dataset.field) clientes[t.dataset.idx][t.dataset.field]=t.value; });
+  el.addEventListener('click', e => { const b=e.target.closest('[data-del]'); if(b){clientes.splice(parseInt(b.dataset.del),1);render();renderClientes();} });
+});
+
+// ═══════════════════════════════════════════════════
+// CLIENTES PAGE
+// ═══════════════════════════════════════════════════
+function renderClientes() {
+  renderTable('tb2','empty2','cnt2',
+    document.getElementById('q2').value.toLowerCase(),
+    document.getElementById('f2').value,
+    document.getElementById('fe').value
+  );
+}
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('f').addEventListener('change', render);
+document.getElementById('q2').addEventListener('input', renderClientes);
+document.getElementById('f2').addEventListener('change', renderClientes);
+document.getElementById('fe').addEventListener('change', renderClientes);
+
+function nuevo() {
+  clientes.push({id:Date.now(),nombre:'Nuevo Cliente',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
+  render();
+  setTimeout(()=>{const rows=document.getElementById('tb').querySelectorAll('tr');if(rows.length)rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'center'});},50);
+}
+async function guardar() {
+  await api('POST','/api/clientes',clientes);
+  showToast('✅ Guardado correctamente');
+}
+
+// ═══════════════════════════════════════════════════
+// SEGUIMIENTO
+// ═══════════════════════════════════════════════════
+function renderSeguimiento() {
+  const fseg = document.getElementById('fseg').value;
+  const seg  = clientes.map((x,i)=>({...x,_idx:i})).filter(x =>
+    !fseg ? ['Seguimiento','Mayor prioridad','Sin contactar','Llamado'].includes(x.estado) : x.estado===fseg
+  );
+  document.getElementById('segCount').textContent = clientes.filter(x=>x.estado==='Seguimiento').length;
+  document.getElementById('segAlta').textContent  = clientes.filter(x=>x.estado==='Mayor prioridad').length;
+  document.getElementById('segSin').textContent   = clientes.filter(x=>x.estado==='Sin contactar').length;
+  document.getElementById('segCon').textContent   = clientes.filter(x=>['Llamado','WhatsApp'].includes(x.estado)).length;
+  const tb=document.getElementById('tbSeg'), empty=document.getElementById('emptySeg');
+  tb.innerHTML='';
+  if (!seg.length) { empty.style.display='block'; return; }
+  empty.style.display='none';
+  seg.forEach(x=>{
+    const pc=x.estado==='Mayor prioridad'?'prioridad-alta':x.estado==='Seguimiento'?'prioridad-media':'prioridad-normal';
+    const row=document.createElement('tr');
+    row.innerHTML=`<td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
+      <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+      <td><span class="${pc}">${escHtml(x.estado)}</span></td>
+      <td>${x.proximaAccion?`<span style="background:rgba(99,102,241,.15);color:var(--accent2);padding:3px 9px;border-radius:6px;font-size:12px">${escHtml(x.proximaAccion)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:var(--muted);font-size:12px">${escHtml(x.notas||'—')}</td>`;
+    tb.appendChild(row);
+  });
+}
+document.getElementById('fseg').addEventListener('change', renderSeguimiento);
+
+// ═══════════════════════════════════════════════════
+// REPORTES
+// ═══════════════════════════════════════════════════
+function renderReportes() {
+  const total=clientes.length, cli=clientes.filter(x=>x.estado==='Cliente').length;
+  document.getElementById('rTotal').textContent   = total;
+  document.getElementById('rClientes').textContent= cli;
+  document.getElementById('rConv').textContent    = ((cli/Math.max(total,1))*100).toFixed(1)+'%';
+  document.getElementById('rCots').textContent    = cotizaciones.length;
+
+  const grupos={};
+  clientes.forEach(x=>grupos[x.grupo]=(grupos[x.grupo]||0)+1);
+  if(chartBar)chartBar.destroy();
+  chartBar=new Chart(document.getElementById('chartBar'),{type:'bar',data:{labels:Object.keys(grupos),datasets:[{data:Object.values(grupos),backgroundColor:Object.keys(grupos).map(l=>GRUPO_COLORS[l]||'#6366f1'),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1f2d45'}},y:{ticks:{color:'#64748b'},grid:{color:'#1f2d45'}}}}});
+
+  const estados={};
+  clientes.forEach(x=>estados[x.estado]=(estados[x.estado]||0)+1);
+  if(chartPie)chartPie.destroy();
+  chartPie=new Chart(document.getElementById('chartPie'),{type:'doughnut',data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),backgroundColor:Object.keys(estados).map(e=>ESTADO_COLORS[e]||'#64748b'),borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:10,font:{size:11}}}}}});
+
+  document.getElementById('tbEstados').innerHTML = Object.entries(estados).sort((a,b)=>b[1]-a[1]).map(([e,n])=>`<tr><td><span class="dot" style="background:${ESTADO_COLORS[e]||'#64748b'};display:inline-block;margin-right:8px"></span>${e}</td><td><strong>${n}</strong></td><td>${((n/Math.max(total,1))*100).toFixed(1)}%</td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// COTIZACIONES
+// ═══════════════════════════════════════════════════
+function renderCotizaciones() {
+  const list = document.getElementById('cotList');
+  const empty= document.getElementById('emptyCot');
+  list.innerHTML='';
+  if (!cotizaciones.length) { empty.style.display='block'; return; }
+  empty.style.display='none';
+  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+  cotizaciones.slice().reverse().forEach(c => {
+    const total = (c.items||[]).reduce((s,it)=>s+(parseFloat(it.precio||0)*parseFloat(it.cantidad||1)),0);
+    const div=document.createElement('div');
+    div.className='cot-card';
+    div.innerHTML=`
+      <div class="cot-header">
+        <div><div class="cot-titulo">${escHtml(c.nombreProyecto||c.tipo||'Cotización')}</div>
+          <div class="cot-cliente">👤 ${escHtml(c.clienteNombre||'—')} &nbsp;·&nbsp; Creado por ${escHtml(c.creadoPorNombre||'—')} &nbsp;·&nbsp; ${fmtDate(c.fecha)}</div></div>
+        <span class="badge cot-estado-${c.estado}" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid currentColor;text-transform:capitalize">${c.estado}</span>
+      </div>
+      <div class="cot-body">
+        <div class="cot-field"><label>Tipo</label><span>${escHtml(c.tipo||'—')}</span></div>
+        <div class="cot-field"><label>Total</label><span style="color:var(--green);font-weight:700;font-size:16px">$${total.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+        <div class="cot-field"><label>Ítems</label><span>${(c.items||[]).length} ítem(s)</span></div>
+      </div>
+      ${c.notas?`<div class="cot-notas">${escHtml(c.notas)}</div>`:''}
+      ${canEdit?`<div class="cot-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editarCot(${c.id})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarCot(${c.id})">🗑 Eliminar</button>
+        <select class="filter-select" style="font-size:12px;padding:5px 9px" onchange="cambiarEstadoCot(${c.id},this.value)">
+          <option value="borrador"${c.estado==='borrador'?' selected':''}>Borrador</option>
+          <option value="enviada"${c.estado==='enviada'?' selected':''}>Enviada</option>
+          <option value="aceptada"${c.estado==='aceptada'?' selected':''}>Aceptada</option>
+          <option value="rechazada"${c.estado==='rechazada'?' selected':''}>Rechazada</option>
+        </select>
+      </div>`:''}`;
+    list.appendChild(div);
+  });
+}
+
+function abrirModalCot(id=null) {
+  document.getElementById('cotId').value = id||'';
+  document.getElementById('modalCotTitle').textContent = id ? 'Editar Cotización' : 'Nueva Cotización';
+  const sel=document.getElementById('cotCliente');
+  sel.innerHTML=clientes.map(c=>`<option value="${c.id}" data-nombre="${escAttr(c.nombre)}">${escHtml(c.nombre)}</option>`).join('');
+  document.getElementById('cotItems').innerHTML='';
+  document.getElementById('cotNotas').value='';
+  document.getElementById('cotTotal').textContent='$0.00';
+  document.getElementById('cotEstado').value='borrador';
+  if (id) {
+    const c=cotizaciones.find(x=>x.id===id);
+    if(c){
+      sel.value=c.clienteId;
+      document.getElementById('cotTipo').value=c.tipo;
+      document.getElementById('cotEstado').value=c.estado;
+      document.getElementById('cotNotas').value=c.notas||'';
+      (c.items||[]).forEach(it=>addCotItem(it));
+      calcTotal();
+    }
+  } else { addCotItem(); }
+  document.getElementById('modalCot').classList.add('open');
+}
+
+function editarCot(id) { abrirModalCot(id); }
+
+function addCotItem(it={}) {
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input placeholder="Descripción" value="${escAttr(it.desc||'')}" oninput="calcTotal()"></td>
+    <td><input type="number" min="1" value="${it.cantidad||1}" style="width:60px" oninput="calcTotal()"></td>
+    <td><input type="number" min="0" placeholder="0.00" value="${it.precio||''}" oninput="calcTotal()"></td>
+    <td class="item-total" style="font-weight:600;color:var(--green)">$0.00</td>
+    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();calcTotal()">✕</button></td>`;
+  document.getElementById('cotItems').appendChild(tr);
+  calcTotal();
+}
+
+function calcTotal() {
+  let total=0;
+  document.querySelectorAll('#cotItems tr').forEach(tr=>{
+    const ins=[...tr.querySelectorAll('input')];
+    if(ins.length>=3){const cant=parseFloat(ins[1].value)||1,precio=parseFloat(ins[2].value)||0,sub=cant*precio;total+=sub;tr.querySelector('.item-total').textContent='$'+sub.toLocaleString('en-US',{minimumFractionDigits:2});}
+  });
+  document.getElementById('cotTotal').textContent='$'+total.toLocaleString('en-US',{minimumFractionDigits:2});
+}
+
+async function guardarCot() {
+  const clienteEl=document.getElementById('cotCliente');
+  const clienteId=parseInt(clienteEl.value);
+  const clienteNombre=clienteEl.options[clienteEl.selectedIndex]?.dataset.nombre||'';
+  const items=[...document.querySelectorAll('#cotItems tr')].map(tr=>{
+    const ins=[...tr.querySelectorAll('input')];
+    return {desc:ins[0]?.value||'',cantidad:parseFloat(ins[1]?.value)||1,precio:parseFloat(ins[2]?.value)||0};
+  }).filter(it=>it.desc);
+  const payload={clienteId,clienteNombre,tipo:document.getElementById('cotTipo').value,estado:document.getElementById('cotEstado').value,notas:document.getElementById('cotNotas').value,items};
+  const eid=document.getElementById('cotId').value;
+  if (eid) { await api('PUT',`/api/cotizaciones/${eid}`,payload); }
+  else { const n=await api('POST','/api/cotizaciones',payload); if(n)cotizaciones.push(n); }
+  await loadCotizaciones();
+  cerrarModal('modalCot'); renderCotizaciones(); showToast('✅ Cotización guardada');
+}
+
+async function eliminarCot(id) {
+  if (!confirm('¿Eliminar cotización?')) return;
+  await api('DELETE',`/api/cotizaciones/${id}`);
+  cotizaciones=cotizaciones.filter(c=>c.id!==id);
+  renderCotizaciones(); showToast('🗑 Cotización eliminada');
+}
+
+async function cambiarEstadoCot(id, estado) {
+  await api('PUT',`/api/cotizaciones/${id}`,{estado});
+  const idx=cotizaciones.findIndex(c=>c.id===id);
+  if(idx>=0)cotizaciones[idx].estado=estado;
+  showToast('✅ Estado actualizado');
+}
+
+// ═══════════════════════════════════════════════════
+// PROYECTOS
+// ═══════════════════════════════════════════════════
+function renderProyectos() {
+  const q=document.getElementById('qProj').value.toLowerCase();
+  const fs=document.getElementById('fProjStatus').value;
+  const filtered=proyectos.filter(p=>(p.nombre||'').toLowerCase().includes(q)||((p.clienteNombre||'').toLowerCase().includes(q)))
+    .filter(p=>!fs||p.estado===fs);
+  const grid=document.getElementById('projGrid');
+  const empty=document.getElementById('emptyProj');
+  grid.innerHTML='';
+  if(!filtered.length){empty.style.display='block';return;}
+  empty.style.display='none';
+  const canEdit=['admin','vendedor'].includes(SESSION.user.rol);
+  const isDev=SESSION.user.rol==='desarrollador';
+  filtered.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='proj-card';
+    div.innerHTML=`
+      <div class="proj-card-header">
+        <div><div class="proj-nombre">${escHtml(p.nombre||'Proyecto')}</div><div class="proj-cliente">👤 ${escHtml(p.clienteNombre||'—')}</div></div>
+        <span class="${PROJ_STATUS_CLASS[p.estado]||'s-pendiente'}" style="font-size:12px;font-weight:700">${PROJ_STATUS_LABEL[p.estado]||p.estado}</span>
+      </div>
+      <div class="proj-meta">
+        <div class="proj-meta-item"><label>Tipo</label><span>${escHtml(p.tipo||'—')}</span></div>
+        <div class="proj-meta-item"><label>Dev</label><span>${escHtml(p.devNombre||'Sin asignar')}</span></div>
+        <div class="proj-meta-item"><label>Creado por</label><span>${escHtml(p.creadoPorNombre||'—')}</span></div>
+        <div class="proj-meta-item"><label>Límite</label><span>${p.fechaLimite?fmtDate(p.fechaLimite):'—'}</span></div>
+      </div>
+      ${p.notasDev?`<div class="proj-notas">📝 ${escHtml(p.notasDev)}</div>`:''}
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Progreso</span><span>${p.progreso||0}%</span></div>
+        <div class="proj-progress"><div class="proj-progress-bar" style="width:${p.progreso||0}%"></div></div>
+      </div>
+      <div class="proj-footer">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="abrirDetalle(${p.id})">💬 Detalle</button>
+          ${canEdit?`<button class="btn btn-secondary btn-sm" onclick="editarProj(${p.id})">✏️ Editar</button>`:''}
+          ${isDev?`<button class="btn btn-warning btn-sm" onclick="abrirDevUpdate(${p.id})">🔧 Actualizar</button>`:''}
+          ${canEdit?`<button class="btn btn-danger btn-sm" onclick="eliminarProj(${p.id})">🗑</button>`:''}
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${(p.mensajes||[]).length} msgs</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+document.getElementById('qProj').addEventListener('input', renderProyectos);
+document.getElementById('fProjStatus').addEventListener('change', renderProyectos);
+
+function abrirModalProj(id=null) {
+  document.getElementById('projId').value=id||'';
+  document.getElementById('modalProjTitle').textContent=id?'Editar Proyecto':'Nuevo Proyecto';
+  const selC=document.getElementById('projCliente');
+  selC.innerHTML=clientes.map(c=>`<option value="${c.id}" data-nombre="${escAttr(c.nombre)}">${escHtml(c.nombre)}</option>`).join('');
+  const selD=document.getElementById('projDev');
+  const devs=usuarios.filter(u=>u.rol==='desarrollador'&&u.activo!==false);
+  selD.innerHTML='<option value="">Sin asignar</option>'+devs.map(u=>`<option value="${u.id}" data-nombre="${escAttr(u.nombre)}">${escHtml(u.nombre)}</option>`).join('');
+  document.getElementById('projNombre').value='';
+  document.getElementById('projTipo').value='Sitio web corporativo';
+  document.getElementById('projNotasDev').value='';
+  document.getElementById('projEstado').value='pendiente';
+  document.getElementById('projProgreso').value=0;
+  document.getElementById('progLabel').textContent='0';
+  document.getElementById('projFechaLimite').value='';
+  if (id) {
+    const p=proyectos.find(x=>x.id===id);
+    if(p){
+      selC.value=p.clienteId;
+      selD.value=p.devId||'';
+      document.getElementById('projNombre').value=p.nombre||'';
+      document.getElementById('projTipo').value=p.tipo||'Sitio web corporativo';
+      document.getElementById('projNotasDev').value=p.notasDev||'';
+      document.getElementById('projEstado').value=p.estado||'pendiente';
+      document.getElementById('projProgreso').value=p.progreso||0;
+      document.getElementById('progLabel').textContent=p.progreso||0;
+      document.getElementById('projFechaLimite').value=p.fechaLimite||'';
+    }
+  }
+  document.getElementById('modalProj').classList.add('open');
+}
+
+function editarProj(id) { abrirModalProj(id); }
+
+async function guardarProj() {
+  const clienteEl=document.getElementById('projCliente');
+  const devEl=document.getElementById('projDev');
+  const payload={
+    clienteId:parseInt(clienteEl.value),
+    clienteNombre:clienteEl.options[clienteEl.selectedIndex]?.dataset.nombre||'',
+    devId:devEl.value?parseInt(devEl.value):null,
+    devNombre:devEl.value?(devEl.options[devEl.selectedIndex]?.dataset.nombre||''):'',
+    nombre:document.getElementById('projNombre').value,
+    tipo:document.getElementById('projTipo').value,
+    notasDev:document.getElementById('projNotasDev').value,
+    estado:document.getElementById('projEstado').value,
+    progreso:parseInt(document.getElementById('projProgreso').value)||0,
+    fechaLimite:document.getElementById('projFechaLimite').value
+  };
+  const eid=document.getElementById('projId').value;
+  if(eid){await api('PUT',`/api/proyectos/${eid}`,payload);}
+  else{const n=await api('POST','/api/proyectos',payload);if(n)proyectos.push(n);}
+  await loadProyectos();
+  cerrarModal('modalProj');renderProyectos();showToast('✅ Proyecto guardado');
+}
+
+async function eliminarProj(id) {
+  if(!confirm('¿Eliminar proyecto?'))return;
+  await api('DELETE',`/api/proyectos/${id}`);
+  proyectos=proyectos.filter(p=>p.id!==id);
+  renderProyectos();showToast('🗑 Proyecto eliminado');
+}
+
+function abrirDevUpdate(id) {
+  const p=proyectos.find(x=>x.id===id);
+  if(!p)return;
+  const estado=prompt(`Estado actual: ${p.estado}\nNuevo estado (pendiente/en-progreso/revision/completado/pausado):`);
+  if(!estado)return;
+  const progreso=parseInt(prompt(`Progreso actual: ${p.progreso||0}%\nNuevo progreso (0-100):`)||p.progreso||0);
+  api('PUT',`/api/proyectos/${id}`,{estado,progreso}).then(()=>{
+    const idx=proyectos.findIndex(x=>x.id===id);
+    if(idx>=0){proyectos[idx].estado=estado;proyectos[idx].progreso=progreso;}
+    renderProyectos();showToast('✅ Estado actualizado');
+  });
+}
+
+function abrirDetalle(id) {
+  const p=proyectos.find(x=>x.id===id);
+  if(!p)return;
+  currentProjId=id;
+  document.getElementById('detailTitle').textContent=p.nombre||'Proyecto';
+  document.getElementById('detailInfo').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div><div class="form-label">Cliente</div><div style="font-size:14px;font-weight:600">${escHtml(p.clienteNombre||'—')}</div></div>
+      <div><div class="form-label">Tipo</div><div style="font-size:14px">${escHtml(p.tipo||'—')}</div></div>
+      <div><div class="form-label">Estado</div><div class="${PROJ_STATUS_CLASS[p.estado]||''}" style="font-size:14px;font-weight:700">${PROJ_STATUS_LABEL[p.estado]||p.estado}</div></div>
+      <div><div class="form-label">Progreso</div><div style="font-size:14px;font-weight:700">${p.progreso||0}%</div></div>
+      <div><div class="form-label">Dev asignado</div><div style="font-size:14px">${escHtml(p.devNombre||'Sin asignar')}</div></div>
+      <div><div class="form-label">Fecha límite</div><div style="font-size:14px">${p.fechaLimite?fmtDate(p.fechaLimite):'—'}</div></div>
+    </div>
+    ${p.notasDev?`<div class="form-label">Notas para el dev</div><div style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--text)">${escHtml(p.notasDev)}</div>`:''}
+    <div class="proj-progress" style="margin-top:16px"><div class="proj-progress-bar" style="width:${p.progreso||0}%"></div></div>`;
+  renderMensajes(p);
+  // Reset tabs to info
+  document.querySelectorAll('[data-dtab]').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('[id^="dtab-"]').forEach(x=>x.classList.remove('active'));
+  document.querySelector('[data-dtab="info"]').classList.add('active');
+  document.getElementById('dtab-info').classList.add('active');
+  document.getElementById('modalProjDetail').classList.add('open');
+}
+
+function renderMensajes(p) {
+  const list=document.getElementById('msgList');
+  const msgs=p.mensajes||[];
+  list.innerHTML=!msgs.length?'<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin mensajes aún.</div>'
+    :msgs.map(m=>`<div class="msg-bubble msg-${m.autorRol}"><div class="msg-meta">${escHtml(m.autor)} · ${ROL_LABELS[m.autorRol]||m.autorRol} · ${fmtDate(m.fecha)}</div>${m.tipo==='solicitud'?'🔴 ':m.tipo==='cambio'?'🟢 ':''}${escHtml(m.texto)}</div>`).join('');
+  list.scrollTop=list.scrollHeight;
+}
+
+async function enviarMensaje() {
+  const texto=document.getElementById('msgTexto').value.trim();
+  const tipo =document.getElementById('msgTipo').value;
+  if(!texto||!currentProjId)return;
+  const msg=await api('POST',`/api/proyectos/${currentProjId}/mensaje`,{texto,tipo});
+  if(msg){
+    const idx=proyectos.findIndex(p=>p.id===currentProjId);
+    if(idx>=0){if(!proyectos[idx].mensajes)proyectos[idx].mensajes=[];proyectos[idx].mensajes.push(msg);}
+    document.getElementById('msgTexto').value='';
+    renderMensajes(proyectos[idx]);
+    renderProyectos();
+  }
+}
+document.getElementById('msgTexto').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarMensaje();}});
+
+// ═══════════════════════════════════════════════════
+// USUARIOS
+// ═══════════════════════════════════════════════════
+function renderUsuarios() {
+  const grid=document.getElementById('userGrid');
+  grid.innerHTML='';
+  usuarios.forEach(u=>{
+    const div=document.createElement('div');
+    div.className='user-card';
+    const avatarColors={admin:'linear-gradient(135deg,#a855f7,#6366f1)',vendedor:'linear-gradient(135deg,#10b981,#3b82f6)',soporte:'linear-gradient(135deg,#3b82f6,#6366f1)',desarrollador:'linear-gradient(135deg,#f59e0b,#ef4444)'};
+    div.innerHTML=`
+      <div class="user-card-header">
+        <div class="avatar-lg" style="background:${avatarColors[u.rol]||'linear-gradient(135deg,var(--accent),var(--purple))'}">${u.avatar||u.nombre.slice(0,2).toUpperCase()}</div>
+        <div><div class="user-card-name">${escHtml(u.nombre)}</div><div class="user-card-email">${escHtml(u.email)}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge badge-${u.rol}">${ROL_LABELS[u.rol]||u.rol}</span>
+        <span class="badge ${u.activo===false?'badge-inactivo':'badge-activo'}">${u.activo===false?'Inactivo':'Activo'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">Creado: ${fmtDate(u.creado)}</div>
+      <div class="user-card-actions">
+        ${u.id!==SESSION.user.id?`<button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">${u.activo===false?'✅ Reactivar':'🚫 Desactivar'}</button>`:'<span style="font-size:12px;color:var(--muted)">← Tú</span>'}
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function abrirModalUsuario(id=null) {
+  document.getElementById('userId').value=id||'';
+  document.getElementById('modalUserTitle').textContent=id?'Editar Usuario':'Nuevo Usuario';
+  document.getElementById('userNombre').value='';
+  document.getElementById('userEmail').value='';
+  document.getElementById('userPass').value='';
+  document.getElementById('userRol').value='vendedor';
+  document.getElementById('userErr').style.display='none';
+  if(id){
+    const u=usuarios.find(x=>x.id===id);
+    if(u){document.getElementById('userNombre').value=u.nombre;document.getElementById('userEmail').value=u.email;document.getElementById('userRol').value=u.rol;}
+  }
+  document.getElementById('modalUser').classList.add('open');
+}
+
+function editarUsuario(id){abrirModalUsuario(id);}
+
+async function guardarUsuario() {
+  const id=document.getElementById('userId').value;
+  const payload={nombre:document.getElementById('userNombre').value.trim(),email:document.getElementById('userEmail').value.trim(),password:document.getElementById('userPass').value,rol:document.getElementById('userRol').value};
+  const err=document.getElementById('userErr');
+  if(!payload.nombre||!payload.email){err.textContent='Nombre y email son requeridos.';err.style.display='block';return;}
+  if(!id&&!payload.password){err.textContent='La contraseña es requerida para nuevos usuarios.';err.style.display='block';return;}
+  const result=id?await api('PUT',`/api/usuarios/${id}`,payload):await api('POST','/api/usuarios',payload);
+  if(result?.error){err.textContent=result.error;err.style.display='block';return;}
+  await loadUsuarios();
+  cerrarModal('modalUser');renderUsuarios();showToast('✅ Usuario guardado');
+}
+
+async function desactivarUsuario(id) {
+  const u=usuarios.find(x=>x.id===id);
+  const nuevoEstado=u?.activo===false?true:false;
+  if(!nuevoEstado&&!confirm(`¿Desactivar a ${u?.nombre}? No podrá iniciar sesión.`))return;
+  await api('PUT',`/api/usuarios/${id}`,{activo:nuevoEstado});
+  await loadUsuarios();renderUsuarios();showToast(nuevoEstado?'✅ Usuario reactivado':'🚫 Usuario desactivado');
+}
+
+// ═══════════════════════════════════════════════════
+// EXPORT EXCEL
+// ═══════════════════════════════════════════════════
+function exportExcel() {
+  const wb=XLSX.utils.book_new();
+  // Hoja Clientes
+  const cliData=[['ID','Nombre','Grupo','Estado','Próxima Acción','Notas','Valor'],...clientes.map(c=>[c.id,c.nombre,c.grupo,c.estado,c.proximaAccion||'',c.notas||'',c.valor||0])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cliData),'Clientes');
+  // Hoja Cotizaciones
+  const cotData=[['ID','Cliente','Tipo','Estado','Total','Notas','Fecha'],...cotizaciones.map(c=>{
+    const total=(c.items||[]).reduce((s,it)=>s+(parseFloat(it.precio||0)*parseFloat(it.cantidad||1)),0);
+    return[c.id,c.clienteNombre||'',c.tipo||'',c.estado,total,c.notas||'',c.fecha];
+  })];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cotData),'Cotizaciones');
+  // Hoja Proyectos
+  const projData=[['ID','Nombre','Cliente','Tipo','Estado','Progreso%','Dev','Notas','Fecha Límite'],...proyectos.map(p=>[p.id,p.nombre||'',p.clienteNombre||'',p.tipo||'',p.estado,p.progreso||0,p.devNombre||'',p.notasDev||'',p.fechaLimite||''])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(projData),'Proyectos');
+  XLSX.writeFile(wb,`CRMPro_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('📊 Excel exportado');
+}
+
+function exportJson() {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({clientes,cotizaciones,proyectos},null,2)],{type:'application/json'}));
+  a.download='crmpro_backup.json';a.click();
+}
+
+function confirmarLimpiar() {
+  if(!confirm('¿Eliminar TODOS los clientes? Esta acción no se puede deshacer.'))return;
+  clientes=[];render();showToast('🗑️ Datos limpiados');
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg) { const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2800); }
+function setAccent(c) { document.documentElement.style.setProperty('--accent',c);showToast('🎨 Color actualizado'); }
+function fmtDate(s) { if(!s)return'—';try{return new Date(s).toLocaleDateString('es-DO',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;} }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+tryAutoLogin();
+</script>
+</body>
+</html>

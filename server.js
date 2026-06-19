@@ -1,0 +1,231 @@
+const express = require('express');
+const fs      = require('fs');
+const path    = require('path');
+const crypto  = require('crypto');
+
+const app = express();
+app.use(express.json());
+
+function hash(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
+
+// ── In-memory store (Vercel serverless compatible) ────────────────────────────
+// On local dev, data is read/written to db/*.json files.
+// On Vercel (no persistent FS), data lives in memory per-instance.
+const IS_VERCEL = !!process.env.VERCEL;
+const DB_DIR    = path.join(__dirname, 'db');
+
+const ADMIN_PASS = hash(process.env.ADMIN_PASSWORD || 'admin123');
+
+// Seed data loaded once at cold start
+let _store = {
+  clientes:     null,
+  usuarios:     null,
+  cotizaciones: null,
+  proyectos:    null,
+  sesiones:     null,
+};
+
+function initStore() {
+  if (IS_VERCEL) {
+    _store.clientes     = [];
+    _store.cotizaciones = [];
+    _store.proyectos    = [];
+    _store.sesiones     = {};
+    _store.usuarios     = [
+      { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() }
+    ];
+  } else {
+    // Local: use JSON files
+    const defaults = {
+      'clientes.json':     [],
+      'cotizaciones.json': [],
+      'proyectos.json':    [],
+      'sesiones.json':     {},
+      'usuarios.json':     [
+        { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() }
+      ],
+    };
+    if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+    Object.entries(defaults).forEach(([f, d]) => {
+      const p = path.join(DB_DIR, f);
+      if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify(d, null, 2));
+    });
+  }
+}
+initStore();
+
+function read(key) {
+  if (IS_VERCEL) return _store[key];
+  return JSON.parse(fs.readFileSync(path.join(DB_DIR, key + '.json'), 'utf8'));
+}
+
+function write(key, data) {
+  if (IS_VERCEL) { _store[key] = data; return; }
+  fs.writeFileSync(path.join(DB_DIR, key + '.json'), JSON.stringify(data, null, 2));
+}
+
+// ── Auth middleware ───────────────────────────────────────────────────────────
+function auth(roles = []) {
+  return (req, res, next) => {
+    const token = req.headers['x-token'];
+    if (!token) return res.status(401).json({ error: 'No autenticado' });
+    const sesiones = read('sesiones');
+    const uid = sesiones[token];
+    if (!uid) return res.status(401).json({ error: 'Sesión inválida' });
+    const usuarios = read('usuarios');
+    const user = usuarios.find(u => u.id === uid && u.activo);
+    if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
+    if (roles.length && !roles.includes(user.rol)) return res.status(403).json({ error: 'Sin permiso' });
+    req.user = user;
+    next();
+  };
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+  const usuarios = read('usuarios');
+  const user = usuarios.find(u => u.email === email && u.password === hash(password) && u.activo);
+  if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' });
+  const token = crypto.randomBytes(32).toString('hex');
+  const sesiones = read('sesiones');
+  sesiones[token] = user.id;
+  write('sesiones', sesiones);
+  res.json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, avatar: user.avatar } });
+});
+
+app.post('/api/logout', auth(), (req, res) => {
+  const token = req.headers['x-token'];
+  const sesiones = read('sesiones');
+  delete sesiones[token];
+  write('sesiones', sesiones);
+  res.json({ ok: true });
+});
+
+app.get('/api/me', auth(), (req, res) => {
+  const { password, ...safe } = req.user;
+  res.json(safe);
+});
+
+// ── CLIENTES ─────────────────────────────────────────────────────────────────
+app.get('/api/clientes', auth(), (req, res) => res.json(read('clientes')));
+app.post('/api/clientes', auth(['admin', 'vendedor']), (req, res) => {
+  write('clientes', req.body);
+  res.json({ ok: true });
+});
+
+// ── USUARIOS ─────────────────────────────────────────────────────────────────
+app.get('/api/usuarios', auth(['admin']), (req, res) => {
+  res.json(read('usuarios').map(({ password, ...u }) => u));
+});
+
+app.post('/api/usuarios', auth(['admin']), (req, res) => {
+  const usuarios = read('usuarios');
+  const { nombre, email, password, rol, avatar } = req.body;
+  if (usuarios.find(u => u.email === email)) return res.status(400).json({ error: 'Email ya registrado' });
+  const nuevo = { id: Date.now(), nombre, email, password: hash(password), rol, activo: true, avatar: avatar || nombre.slice(0, 2).toUpperCase(), creado: new Date().toISOString() };
+  usuarios.push(nuevo);
+  write('usuarios', usuarios);
+  const { password: _, ...safe } = nuevo;
+  res.json(safe);
+});
+
+app.put('/api/usuarios/:id', auth(['admin']), (req, res) => {
+  const usuarios = read('usuarios');
+  const idx = usuarios.findIndex(u => u.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+  const { password, ...rest } = req.body;
+  usuarios[idx] = { ...usuarios[idx], ...rest };
+  if (password) usuarios[idx].password = hash(password);
+  write('usuarios', usuarios);
+  res.json({ ok: true });
+});
+
+app.delete('/api/usuarios/:id', auth(['admin']), (req, res) => {
+  const uid = parseInt(req.params.id);
+  if (uid === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
+  const usuarios = read('usuarios').map(u => u.id === uid ? { ...u, activo: false } : u);
+  write('usuarios', usuarios);
+  res.json({ ok: true });
+});
+
+// ── COTIZACIONES ─────────────────────────────────────────────────────────────
+app.get('/api/cotizaciones', auth(), (req, res) => res.json(read('cotizaciones')));
+
+app.post('/api/cotizaciones', auth(['admin', 'vendedor']), (req, res) => {
+  const cots = read('cotizaciones');
+  const nueva = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), estado: req.body.estado || 'borrador' };
+  cots.push(nueva);
+  write('cotizaciones', cots);
+  res.json(nueva);
+});
+
+app.put('/api/cotizaciones/:id', auth(['admin', 'vendedor']), (req, res) => {
+  const cots = read('cotizaciones');
+  const idx = cots.findIndex(c => c.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
+  cots[idx] = { ...cots[idx], ...req.body, actualizadoEn: new Date().toISOString() };
+  write('cotizaciones', cots);
+  res.json({ ok: true });
+});
+
+app.delete('/api/cotizaciones/:id', auth(['admin']), (req, res) => {
+  write('cotizaciones', read('cotizaciones').filter(c => c.id !== parseInt(req.params.id)));
+  res.json({ ok: true });
+});
+
+// ── PROYECTOS ─────────────────────────────────────────────────────────────────
+app.get('/api/proyectos', auth(), (req, res) => res.json(read('proyectos')));
+
+app.post('/api/proyectos', auth(['admin', 'vendedor']), (req, res) => {
+  const proyectos = read('proyectos');
+  const nuevo = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), mensajes: [], estado: 'pendiente', progreso: 0 };
+  proyectos.push(nuevo);
+  write('proyectos', proyectos);
+  res.json(nuevo);
+});
+
+app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'desarrollador']), (req, res) => {
+  const proyectos = read('proyectos');
+  const idx = proyectos.findIndex(p => p.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+  if (req.user.rol === 'desarrollador') {
+    ['estado', 'devAsignado', 'progreso'].forEach(k => { if (req.body[k] !== undefined) proyectos[idx][k] = req.body[k]; });
+  } else {
+    proyectos[idx] = { ...proyectos[idx], ...req.body };
+  }
+  proyectos[idx].actualizadoEn = new Date().toISOString();
+  write('proyectos', proyectos);
+  res.json({ ok: true });
+});
+
+app.post('/api/proyectos/:id/mensaje', auth(), (req, res) => {
+  const proyectos = read('proyectos');
+  const idx = proyectos.findIndex(p => p.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+  if (!proyectos[idx].mensajes) proyectos[idx].mensajes = [];
+  const msg = { id: Date.now(), texto: req.body.texto, tipo: req.body.tipo || 'mensaje', autor: req.user.nombre, autorRol: req.user.rol, fecha: new Date().toISOString() };
+  proyectos[idx].mensajes.push(msg);
+  write('proyectos', proyectos);
+  res.json(msg);
+});
+
+app.delete('/api/proyectos/:id', auth(['admin']), (req, res) => {
+  write('proyectos', read('proyectos').filter(p => p.id !== parseInt(req.params.id)));
+  res.json({ ok: true });
+});
+
+// Static files AFTER all API routes
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Catch-all: serve index.html for any non-API route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Local dev server (not used by Vercel)
+if (!IS_VERCEL) {
+  app.listen(3000, () => console.log('CRM Pro → http://localhost:3000'));
+}
+
+module.exports = app;

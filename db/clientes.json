@@ -1,0 +1,569 @@
+[
+  {
+    "id": 1,
+    "nombre": "Karibo Punta Cana",
+    "grupo": "Critico",
+    "estado": "Mayor prioridad",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 2,
+    "nombre": "Prinsa Inmobiliaria Punta Cana",
+    "grupo": "Critico",
+    "estado": "Seguimiento",
+    "notas": "Enviado",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 3,
+    "nombre": "Grupo Abaatte Peluqueria",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 4,
+    "nombre": "Sambalu RD",
+    "grupo": "Critico",
+    "estado": "WhatsApp",
+    "notas": "Llamada y comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 5,
+    "nombre": "Veterinaria Dr. Ferreira Rodríguez",
+    "grupo": "Critico",
+    "estado": "Sin contactar",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 6,
+    "nombre": "Centro Dental Dra. Miriam Cáceres",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 7,
+    "nombre": "Salto El Limón Parada Ismael Excursiones",
+    "grupo": "Critico",
+    "estado": "Seguimiento",
+    "notas": "Ya escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 8,
+    "nombre": "Clínica Dental Patnella",
+    "grupo": "Critico",
+    "estado": "Seguimiento",
+    "notas": "Ya le escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 9,
+    "nombre": "Óptica Visión del Sur",
+    "grupo": "Critico",
+    "estado": "Seguimiento",
+    "notas": "Ya le escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 10,
+    "nombre": "La Tinaja",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 11,
+    "nombre": "Centro Dental Integral",
+    "grupo": "Critico",
+    "estado": "Sin contactar",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 12,
+    "nombre": "La Plaza Del Cafe Restaurant",
+    "grupo": "Critico",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 13,
+    "nombre": "Ecofarma",
+    "grupo": "Critico",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 14,
+    "nombre": "Jarabacoa Eco Adventures",
+    "grupo": "Critico",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 15,
+    "nombre": "Centro Dental Dra. Patricia Franco",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 16,
+    "nombre": "Supermercado Jarabacoa",
+    "grupo": "Critico",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 17,
+    "nombre": "Joyería Los Veganos",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 18,
+    "nombre": "Jarco Peluquería & Spa (Alina)",
+    "grupo": "Critico",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 19,
+    "nombre": "San Rafael Surf School",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Enviado",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 20,
+    "nombre": "Restaurant Charles Cuisine",
+    "grupo": "Medio",
+    "estado": "Sin contactar",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 21,
+    "nombre": "Barceloneta",
+    "grupo": "Medio",
+    "estado": "WhatsApp",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 22,
+    "nombre": "Transporte y Ferretería J.",
+    "grupo": "Medio",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 23,
+    "nombre": "DOMAP TEXTIL SRL",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 24,
+    "nombre": "Arnaldo Womenswear",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Llamamos y enviamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 25,
+    "nombre": "Centro Automotriz Fernandito",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 26,
+    "nombre": "Villas Elite Jarabacoa",
+    "grupo": "Medio",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 27,
+    "nombre": "Centro Automotriz Eduardo",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 28,
+    "nombre": "Wonder Beauty Place",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 29,
+    "nombre": "Casa Ferretera",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 30,
+    "nombre": "Panadería/Repostería Génesis",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 31,
+    "nombre": "Hotel Napoles",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 32,
+    "nombre": "Imprenta Jarabacoa",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 33,
+    "nombre": "Restaurante Delicias Marinas",
+    "grupo": "Medio",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 34,
+    "nombre": "Nino Auto Gas",
+    "grupo": "Medio",
+    "estado": "WhatsApp",
+    "notas": "Contacto WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 35,
+    "nombre": "Body Sculpting Training Center",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Llamamos y escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 36,
+    "nombre": "Panettis Panadería & Repostería",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Llamamos y escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 37,
+    "nombre": "Shadday Graphics",
+    "grupo": "Medio",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 38,
+    "nombre": "ISA'S BEAUTY CENTER",
+    "grupo": "Leve",
+    "estado": "Sin contactar",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 39,
+    "nombre": "Fidel Cafe Corner",
+    "grupo": "Leve",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 40,
+    "nombre": "ACQUA BY JUDITH BEAUTY & SPA",
+    "grupo": "Leve",
+    "estado": "Cliente",
+    "notas": "DONE",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 41,
+    "nombre": "FERRECENTRO OZAMA",
+    "grupo": "Leve",
+    "estado": "Sin contactar",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 42,
+    "nombre": "HIGH-FITNESS",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Llamada agendada hoy",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 43,
+    "nombre": "FERRETERÍA PAPO",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Seguimiento 3 de julio",
+    "proximaAccion": "2026-07-03",
+    "valor": 0
+  },
+  {
+    "id": 44,
+    "nombre": "Farmacia Erimer",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Pendiente WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 45,
+    "nombre": "GYM FIT CARE",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Respondió mensaje automático",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 46,
+    "nombre": "RANCHO LIMÓN ADVENTURE",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Ya escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 47,
+    "nombre": "NATIV ARTE GIFT SHOP",
+    "grupo": "Leve",
+    "estado": "Seguimiento",
+    "notas": "Ya escribimos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 48,
+    "nombre": "Salon Imagen",
+    "grupo": "Leve",
+    "estado": "WhatsApp",
+    "notas": "Vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 49,
+    "nombre": "ESTELA - Es Moda",
+    "grupo": "Leve",
+    "estado": "WhatsApp",
+    "notas": "Vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 50,
+    "nombre": "Siempre Bella Beauty Center",
+    "grupo": "Leve",
+    "estado": "WhatsApp",
+    "notas": "Comunicación vía WhatsApp",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 51,
+    "nombre": "Jerez Pet Clinic",
+    "grupo": "Leve",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 52,
+    "nombre": "Karini Clothing Store",
+    "grupo": "Leve",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 53,
+    "nombre": "Clínica Veterinaria Animal Stop & Shop",
+    "grupo": "Leve",
+    "estado": "Llamado",
+    "notas": "Ya llamamos",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 54,
+    "nombre": "Dolphin Island Park",
+    "grupo": "Medio",
+    "estado": "Sin contactar",
+    "notas": "Caso especial",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 55,
+    "nombre": "Down Town Punta Cana",
+    "grupo": "Medio",
+    "estado": "Sin contactar",
+    "notas": "Caso especial",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 56,
+    "nombre": "Sirenis Seaview Country Club",
+    "grupo": "Medio",
+    "estado": "Sin contactar",
+    "notas": "Caso especial",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 57,
+    "nombre": "Escape Park Cap Cana",
+    "grupo": "Medio",
+    "estado": "Sin contactar",
+    "notas": "Caso especial",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 58,
+    "nombre": "ULTRA CLÍNICA ODONTOLÓGICA",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "No les interesa por el momento",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 59,
+    "nombre": "Farmacia y Super Mercado Ana Isabel",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Posible seguimiento con persona real",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 60,
+    "nombre": "Jarabacoa Fitness",
+    "grupo": "Medio",
+    "estado": "Seguimiento",
+    "notas": "Agendado",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 61,
+    "nombre": "El Rincón del Komelon",
+    "grupo": "Leve",
+    "estado": "Sin contactar",
+    "notas": "No tienen WhatsApp ni número fijo",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 62,
+    "nombre": "Princecitos Barber Kids",
+    "grupo": "Confirmado",
+    "estado": "Cliente",
+    "notas": "",
+    "proximaAccion": "",
+    "valor": 0
+  },
+  {
+    "id": 63,
+    "nombre": "The K Sisters Coffee Market",
+    "grupo": "Confirmado",
+    "estado": "Cliente",
+    "notas": "Vista Demo",
+    "proximaAccion": "",
+    "valor": 0
+  }
+]

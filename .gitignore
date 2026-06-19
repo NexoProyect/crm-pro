@@ -1,0 +1,5 @@
+node_modules/
+db/sesiones.json
+db/usuarios.json
+.env
+.vercel

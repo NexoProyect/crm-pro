@@ -605,6 +605,32 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- ════ MODAL DEV UPDATE ════ -->
+<div class="modal-overlay" id="modalDevUpdate">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><span class="modal-title">Actualizar Proyecto</span><span class="modal-close" onclick="cerrarModal('modalDevUpdate')">×</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="devUpdateId">
+      <div class="form-group"><label class="form-label">Estado</label>
+        <select class="form-select" id="devUpdateEstado">
+          <option value="pendiente">Pendiente</option>
+          <option value="en-progreso">En progreso</option>
+          <option value="revision">En revisión</option>
+          <option value="completado">Completado</option>
+          <option value="pausado">Pausado</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Progreso: <span id="devUpdateProgLabel">0</span>%</label>
+        <input type="range" id="devUpdateProgreso" min="0" max="100" value="0" oninput="document.getElementById('devUpdateProgLabel').textContent=this.value">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalDevUpdate')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarDevUpdate()">🔧 Actualizar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ MODAL USUARIO ════ -->
 <div class="modal-overlay" id="modalUser">
   <div class="modal" style="max-width:460px">
@@ -656,9 +682,19 @@ const PROJ_STATUS_CLASS = {'pendiente':'s-pendiente','en-progreso':'s-en-progres
 async function api(method, url, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json', 'x-token': SESSION.token || '' } };
   if (body !== undefined) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
-  if (r.status === 401) { doLogout(); return null; }
-  return r.json();
+  try {
+    const r = await fetch(url, opts);
+    if (r.status === 401 && url !== '/api/logout') {
+      SESSION = { token: null, user: null };
+      localStorage.removeItem('crm_token');
+      location.reload();
+      return null;
+    }
+    return r.json();
+  } catch (e) {
+    console.error('API error', method, url, e);
+    return null;
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -680,7 +716,9 @@ async function doLogin() {
 document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 async function doLogout() {
-  if (SESSION.token) await api('POST', '/api/logout');
+  if (SESSION.token) {
+    try { await api('POST', '/api/logout'); } catch (_) {}
+  }
   SESSION = { token: null, user: null };
   localStorage.removeItem('crm_token');
   location.reload();
@@ -778,7 +816,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
 document.querySelectorAll('[data-cfg]').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('[data-cfg]').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('#cfg-perfil,#cfg-datos,#cfg-apariencia').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('cfg-' + t.dataset.cfg).classList.add('active');
   });
@@ -1194,14 +1232,22 @@ async function eliminarProj(id) {
 function abrirDevUpdate(id) {
   const p=proyectos.find(x=>x.id===id);
   if(!p)return;
-  const estado=prompt(`Estado actual: ${p.estado}\nNuevo estado (pendiente/en-progreso/revision/completado/pausado):`);
-  if(!estado)return;
-  const progreso=parseInt(prompt(`Progreso actual: ${p.progreso||0}%\nNuevo progreso (0-100):`)||p.progreso||0);
-  api('PUT',`/api/proyectos/${id}`,{estado,progreso}).then(()=>{
-    const idx=proyectos.findIndex(x=>x.id===id);
-    if(idx>=0){proyectos[idx].estado=estado;proyectos[idx].progreso=progreso;}
-    renderProyectos();showToast('✅ Estado actualizado');
-  });
+  document.getElementById('devUpdateId').value=id;
+  document.getElementById('devUpdateEstado').value=p.estado||'pendiente';
+  document.getElementById('devUpdateProgreso').value=p.progreso||0;
+  document.getElementById('devUpdateProgLabel').textContent=p.progreso||0;
+  document.getElementById('modalDevUpdate').classList.add('open');
+}
+
+async function confirmarDevUpdate() {
+  const id=parseInt(document.getElementById('devUpdateId').value);
+  const estado=document.getElementById('devUpdateEstado').value;
+  const progreso=parseInt(document.getElementById('devUpdateProgreso').value)||0;
+  await api('PUT',`/api/proyectos/${id}`,{estado,progreso});
+  const idx=proyectos.findIndex(x=>x.id===id);
+  if(idx>=0){proyectos[idx].estado=estado;proyectos[idx].progreso=progreso;}
+  cerrarModal('modalDevUpdate');
+  renderProyectos();showToast('✅ Estado actualizado');
 }
 
 function abrirDetalle(id) {
@@ -1344,9 +1390,11 @@ function exportJson() {
   a.download='crmpro_backup.json';a.click();
 }
 
-function confirmarLimpiar() {
+async function confirmarLimpiar() {
   if(!confirm('¿Eliminar TODOS los clientes? Esta acción no se puede deshacer.'))return;
-  clientes=[];render();showToast('🗑️ Datos limpiados');
+  clientes=[];
+  await api('POST','/api/clientes',[]);
+  render();showToast('🗑️ Datos limpiados');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1359,8 +1407,9 @@ function fmtDate(s) { if(!s)return'—';try{return new Date(s).toLocaleDateStrin
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-// Close modals on overlay click
+// Close modals on overlay click or Escape
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
 
 // ═══════════════════════════════════════════════════
 // BOOT

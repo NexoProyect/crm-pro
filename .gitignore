@@ -1,5 +1,7 @@
 node_modules/
 db/sesiones.json
 db/usuarios.json
+db/cotizaciones.json
+db/proyectos.json
 .env
 .vercel

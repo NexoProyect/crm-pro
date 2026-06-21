@@ -540,6 +540,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="header-left"><h1>Campañas</h1><p>Prospectos importados para outreach comercial</p></div>
     <div class="header-actions" id="campActions">
       <button class="btn btn-danger btn-sm" id="btnEliminarCamp" style="display:none" onclick="eliminarCampanaActual()">🗑 Eliminar campaña</button>
+      <button class="btn btn-secondary btn-sm" id="btnEjemploCamp" onclick="descargarEjemploCamp()" style="display:none">📄 Ejemplo JSON</button>
       <button class="btn btn-primary" id="btnImportCamp" onclick="abrirImportCamp()" style="display:none">📥 Importar JSON</button>
     </div>
   </div>
@@ -1712,9 +1713,125 @@ async function agregarAlCRM(campId, pid) {
   showToast(`✅ ${p.nombre} agregado al CRM`);
 }
 
+function descargarEjemploCamp() {
+  const ejemplo = {
+    "campana": {
+      "id": "mi-zona-2026-07",
+      "agencia": "Linf9s Web Services",
+      "zona": "Jarabacoa",
+      "subzonas": ["Centro", "La Joya"],
+      "rango_precio_dop": { "min": 27000, "max": 50000 },
+      "excluir_tipos": ["pica pollo", "colmado", "lavandería"],
+      "meta_prospectos": 30,
+      "sectores_requeridos": { "turismo_min": 5 }
+    },
+    "prospectos": [
+      {
+        "id": 1,
+        "nombre": "Restaurante El Rancho",
+        "tipo": "Restaurante",
+        "zona": "Jarabacoa",
+        "plus_code": "ABCD+123",
+        "contacto": {
+          "telefono": "(809) 555-0001",
+          "direccion": "Calle Principal #10",
+          "web": null,
+          "redes": ["instagram.com/elrancho"],
+          "email": null,
+          "perfil_reclamado": false
+        },
+        "auditoria_digital": {
+          "tiene_web_propia": false,
+          "problemas": [
+            "Sin sitio web propio",
+            "Perfil de Google no reclamado",
+            "Solo presencia en Instagram"
+          ],
+          "notas": "Dependencia total de redes sociales para ser encontrado online"
+        },
+        "outreach": {
+          "mensaje_es": "Hola, vi que Restaurante El Rancho no tiene sitio web propio. Muchos clientes buscan restaurantes en Google y no los encuentran. ¿Le gustaría agendar una demo de 10 minutos para ver cómo podemos ayudarles?",
+          "cta": "demo_10min",
+          "estado": "pendiente",
+          "fecha_contacto": null,
+          "respuesta": null
+        }
+      },
+      {
+        "id": 2,
+        "nombre": "Hotel Vista Verde",
+        "tipo": "Hotel",
+        "zona": "Jarabacoa",
+        "plus_code": "EFGH+456",
+        "contacto": {
+          "telefono": "(809) 555-0002",
+          "direccion": "Av. La Confluencia km 3",
+          "web": "hotelvistaverde.com",
+          "redes": ["facebook.com/hotelvistaverde", "instagram.com/vistaverde"],
+          "email": "info@hotelvistaverde.com",
+          "perfil_reclamado": true
+        },
+        "auditoria_digital": {
+          "tiene_web_propia": true,
+          "problemas": [
+            "Sitio web desactualizado (último post 2022)",
+            "Sin sistema de reservas online",
+            "Poca presencia en TripAdvisor"
+          ],
+          "notas": "Tienen web pero está abandonada, oportunidad para rediseño"
+        },
+        "outreach": {
+          "mensaje_es": "Hola, revisé el sitio de Hotel Vista Verde y noté que podría estar generando más reservas directas. Trabajamos con hoteles en la zona para modernizar su presencia digital. ¿Conversamos 10 minutos?",
+          "cta": "demo_10min",
+          "estado": "pendiente",
+          "fecha_contacto": null,
+          "respuesta": null
+        }
+      },
+      {
+        "id": 3,
+        "nombre": "Clínica Dental Sonrisa",
+        "tipo": "Clínica dental",
+        "zona": "Jarabacoa",
+        "plus_code": "IJKL+789",
+        "contacto": {
+          "telefono": "(809) 555-0003",
+          "direccion": "Calle Duarte #45",
+          "web": null,
+          "redes": [],
+          "email": null,
+          "perfil_reclamado": false
+        },
+        "auditoria_digital": {
+          "tiene_web_propia": false,
+          "problemas": [
+            "Sin presencia digital alguna",
+            "No aparece en búsquedas de Google Maps",
+            "Sin redes sociales"
+          ],
+          "notas": "Clínica completamente invisible online, alto potencial"
+        },
+        "outreach": {
+          "mensaje_es": "Hola, busqué clínicas dentales en Jarabacoa y Clínica Dental Sonrisa no aparece en Google. Sus pacientes potenciales no pueden encontrarlos. Podemos solucionar eso. ¿Le interesa una demo rápida?",
+          "cta": "demo_10min",
+          "estado": "pendiente",
+          "fecha_contacto": null,
+          "respuesta": null
+        }
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(ejemplo, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'campana_ejemplo.json';
+  a.click();
+}
+
 function initCampanas() {
   const isAdmin = SESSION.user.rol === 'admin';
   document.getElementById('btnImportCamp').style.display = isAdmin ? '' : 'none';
+  document.getElementById('btnEjemploCamp').style.display = isAdmin ? '' : 'none';
   document.getElementById('btnEliminarCamp').style.display = 'none';
   renderSelectorCampanas();
 }

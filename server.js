@@ -77,15 +77,13 @@ async function read(key) {
     const db  = await getDb();
     const doc = await db.collection('store').findOne({ _id: key });
     // Seed admin on first read of usuarios if collection is empty
-    if (key === 'usuarios') {
-      if (!doc || !doc.data || doc.data.length === 0) {
-        await db.collection('store').updateOne(
-          { _id: 'usuarios' },
-          { $setOnInsert: { _id: 'usuarios', data: [adminUser] } },
-          { upsert: true }
-        );
-        return [adminUser];
-      }
+    if (key === 'usuarios' && (!doc || !doc.data || doc.data.length === 0)) {
+      await db.collection('store').updateOne(
+        { _id: 'usuarios' },
+        { $set: { data: [adminUser] } },
+        { upsert: true }
+      );
+      return [adminUser];
     }
     return doc ? doc.data : [];
   }

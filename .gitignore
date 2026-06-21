@@ -1,4 +1,5 @@
 node_modules/
+scripts/
 db/sesiones.json
 db/usuarios.json
 db/cotizaciones.json

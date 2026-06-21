@@ -243,6 +243,38 @@ tbody td{padding:11px 13px;font-size:13px;vertical-align:middle}
 /* PROGRESS INPUT */
 input[type=range]{width:100%;accent-color:var(--accent)}
 
+/* CAMPAÑAS */
+.camp-selector{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.camp-selector select{flex:1;min-width:200px;padding:9px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none}
+.camp-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.camp-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;flex-direction:column;gap:3px;min-width:110px}
+.camp-stat-val{font-size:22px;font-weight:800}
+.camp-stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.prosp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.prosp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
+.prosp-card:hover{border-color:var(--accent)}
+.prosp-card.estado-agregado{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.04)}
+.prosp-card.estado-descartado{opacity:.45;border-color:rgba(100,116,139,.3)}
+.prosp-nombre{font-size:14px;font-weight:700;line-height:1.3}
+.prosp-tipo{font-size:11px;color:var(--muted);margin-top:2px}
+.prosp-contacto{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.prosp-contacto a{color:var(--accent2);text-decoration:none}.prosp-contacto a:hover{text-decoration:underline}
+.prosp-problemas{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:9px 11px}
+.prosp-problema-item{font-size:11px;color:#fca5a5;display:flex;align-items:flex-start;gap:5px;margin-bottom:3px}
+.prosp-problema-item:last-child{margin-bottom:0}
+.prosp-mensaje{background:var(--surface2);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--muted);line-height:1.5;max-height:70px;overflow:hidden;position:relative}
+.prosp-mensaje.expanded{max-height:none}
+.prosp-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.prosp-estado-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.pe-pendiente{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.pe-agregado{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.pe-descartado{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
+.pe-contactado{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.camp-import-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.camp-import-box textarea{width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:monospace;resize:vertical;outline:none;min-height:120px}
+.camp-import-box textarea:focus{border-color:var(--accent)}
+.camp-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+
 @media(max-width:1100px){.content-row,.proj-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:18px 14px}.metrics{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -272,6 +304,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="nav-item" data-page="clientes" data-roles="admin,vendedor,soporte"><span class="nav-icon">👥</span> Clientes</div>
   <div class="nav-item" data-page="cotizaciones" data-roles="admin,vendedor,soporte"><span class="nav-icon">📄</span> Cotizaciones</div>
   <div class="nav-item" data-page="proyectos" data-roles="admin,vendedor,desarrollador,soporte"><span class="nav-icon">💻</span> Proyectos Dev</div>
+  <div class="nav-item" data-page="campanas" data-roles="admin,vendedor,soporte"><span class="nav-icon">🎯</span> Campañas</div>
   <div class="nav-item" data-page="seguimiento" data-roles="admin,vendedor,soporte"><span class="nav-icon">📋</span> Seguimiento</div>
   <div class="nav-item" data-page="reportes" data-roles="admin,vendedor"><span class="nav-icon">📈</span> Reportes</div>
   <div class="nav-item" data-page="usuarios" data-roles="admin"><span class="nav-icon">👤</span> Usuarios</div>
@@ -501,7 +534,84 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- ═══════════ CAMPAÑAS ═══════════ -->
+<div class="page" id="page-campanas">
+  <div class="header">
+    <div class="header-left"><h1>Campañas</h1><p>Prospectos importados para outreach comercial</p></div>
+    <div class="header-actions" id="campActions">
+      <button class="btn btn-danger btn-sm" id="btnEliminarCamp" style="display:none" onclick="eliminarCampanaActual()">🗑 Eliminar campaña</button>
+      <button class="btn btn-primary" id="btnImportCamp" onclick="abrirImportCamp()" style="display:none">📥 Importar JSON</button>
+    </div>
+  </div>
+
+  <!-- Selector de campaña -->
+  <div class="camp-selector">
+    <select id="campSelect" onchange="seleccionarCampana()">
+      <option value="">— Selecciona una campaña —</option>
+    </select>
+  </div>
+
+  <!-- Sin campañas -->
+  <div id="campEmpty" class="empty" style="display:none">
+    <div class="empty-icon">🎯</div>
+    <p>No hay campañas importadas aún.<br>Como Admin, usa el botón "Importar JSON" para cargar prospectos.</p>
+  </div>
+
+  <!-- Contenido de campaña activa -->
+  <div id="campContent" style="display:none">
+    <!-- Info de campaña -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+      <div><div class="form-label">Zona</div><div style="font-size:13px;font-weight:600" id="campZona">—</div></div>
+      <div><div class="form-label">Agencia</div><div style="font-size:13px" id="campAgencia">—</div></div>
+      <div><div class="form-label">Rango precio</div><div style="font-size:13px" id="campPrecio">—</div></div>
+      <div><div class="form-label">Importado</div><div style="font-size:13px;color:var(--muted)" id="campFecha">—</div></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="camp-stats" id="campStats"></div>
+
+    <!-- Filtros -->
+    <div class="camp-filter-bar">
+      <div class="search-wrap" style="flex:1;min-width:180px"><span class="search-icon">🔍</span><input id="qCamp" placeholder="Buscar prospecto…" oninput="renderProspectos()"></div>
+      <select class="filter-select" id="fCampEstado" onchange="renderProspectos()">
+        <option value="">Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="contactado">Contactado</option>
+        <option value="agregado">Agregado al CRM</option>
+        <option value="descartado">Descartado</option>
+      </select>
+      <select class="filter-select" id="fCampTipo" onchange="renderProspectos()">
+        <option value="">Todos los tipos</option>
+      </select>
+      <span class="count-badge" id="campCount"></span>
+    </div>
+
+    <!-- Grid de prospectos -->
+    <div class="prosp-grid" id="prospGrid"></div>
+    <div id="emptyProsp" class="empty" style="display:none"><div class="empty-icon">🔍</div><p>Sin resultados</p></div>
+  </div>
+</div>
+
 </main>
+
+<!-- ════ MODAL IMPORTAR CAMPAÑA ════ -->
+<div class="modal-overlay" id="modalImportCamp">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-header"><span class="modal-title">Importar Campaña</span><span class="modal-close" onclick="cerrarModal('modalImportCamp')">×</span></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Pega el JSON de campaña generado. Si ya existe una campaña con el mismo ID, se reemplazará.</p>
+      <div class="form-group">
+        <label class="form-label">JSON de Campaña</label>
+        <textarea id="campJsonInput" class="form-input" rows="12" style="font-family:monospace;font-size:12px;resize:vertical" placeholder='{ "campana": { "id": "...", ... }, "prospectos": [...] }'></textarea>
+      </div>
+      <div id="campImportErr" style="color:var(--red);font-size:13px;display:none;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalImportCamp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="importarCampana()">📥 Importar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════ MODAL COTIZACIÓN ════ -->
 <div class="modal-overlay" id="modalCot">
@@ -756,7 +866,7 @@ async function iniciarApp() {
   applyRoleUI();
 
   // Load data
-  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos()]);
+  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos(), loadCampanas()]);
   if (u.rol === 'admin') await loadUsuarios();
 
   render();
@@ -809,6 +919,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     if (pg === 'cotizaciones')renderCotizaciones();
     if (pg === 'proyectos')   renderProyectos();
     if (pg === 'usuarios')    renderUsuarios();
+    if (pg === 'campanas')    initCampanas();
   });
 });
 
@@ -1410,6 +1521,203 @@ function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'
 // Close modals on overlay click or Escape
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
+
+// ═══════════════════════════════════════════════════
+// CAMPAÑAS
+// ═══════════════════════════════════════════════════
+let campanas = [];
+let campanaActual = null;
+
+async function loadCampanas() {
+  const d = await api('GET', '/api/campanas');
+  if (d) campanas = d;
+}
+
+function abrirImportCamp() {
+  document.getElementById('campJsonInput').value = '';
+  document.getElementById('campImportErr').style.display = 'none';
+  document.getElementById('modalImportCamp').classList.add('open');
+}
+
+async function importarCampana() {
+  const raw = document.getElementById('campJsonInput').value.trim();
+  const err = document.getElementById('campImportErr');
+  err.style.display = 'none';
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch { err.textContent = 'JSON inválido. Revisa la sintaxis.'; err.style.display = 'block'; return; }
+  if (!parsed.campana || !parsed.prospectos) { err.textContent = 'El JSON debe tener "campana" y "prospectos".'; err.style.display = 'block'; return; }
+  const res = await api('POST', '/api/campanas', parsed);
+  if (!res || res.error) { err.textContent = res?.error || 'Error al importar'; err.style.display = 'block'; return; }
+  await loadCampanas();
+  cerrarModal('modalImportCamp');
+  renderSelectorCampanas();
+  // Auto-seleccionar la recién importada
+  document.getElementById('campSelect').value = parsed.campana.id;
+  seleccionarCampana();
+  showToast(`✅ ${res.total} prospectos importados`);
+}
+
+async function eliminarCampanaActual() {
+  if (!campanaActual) return;
+  if (!confirm(`¿Eliminar la campaña "${campanaActual.campana.zona || campanaActual.id}"? Esta acción no se puede deshacer.`)) return;
+  await api('DELETE', `/api/campanas/${campanaActual.id}`);
+  await loadCampanas();
+  campanaActual = null;
+  renderSelectorCampanas();
+  document.getElementById('campContent').style.display = 'none';
+  document.getElementById('campEmpty').style.display = campanas.length ? 'none' : 'block';
+  showToast('🗑 Campaña eliminada');
+}
+
+function renderSelectorCampanas() {
+  const sel = document.getElementById('campSelect');
+  sel.innerHTML = '<option value="">— Selecciona una campaña —</option>' +
+    campanas.map(c => `<option value="${c.id}">${escHtml(c.campana.zona || c.id)} — ${c.prospectos.length} prospectos (${fmtDate(c.importadoEn)})</option>`).join('');
+  document.getElementById('campEmpty').style.display = campanas.length ? 'none' : 'block';
+  if (!campanas.length) document.getElementById('campContent').style.display = 'none';
+}
+
+function seleccionarCampana() {
+  const id = document.getElementById('campSelect').value;
+  campanaActual = campanas.find(c => c.id === id) || null;
+  document.getElementById('btnEliminarCamp').style.display = campanaActual && SESSION.user.rol === 'admin' ? '' : 'none';
+  if (!campanaActual) { document.getElementById('campContent').style.display = 'none'; return; }
+  document.getElementById('campContent').style.display = 'block';
+  const ca = campanaActual.campana;
+  document.getElementById('campZona').textContent = [ca.zona, ...(ca.subzonas||[])].join(', ') || '—';
+  document.getElementById('campAgencia').textContent = ca.agencia || '—';
+  document.getElementById('campPrecio').textContent = ca.rango_precio_dop ? `RD$${ca.rango_precio_dop.min.toLocaleString()} – RD$${ca.rango_precio_dop.max.toLocaleString()}` : '—';
+  document.getElementById('campFecha').textContent = `${fmtDate(campanaActual.importadoEn)} por ${campanaActual.importadoPor}`;
+  // Poblar tipos
+  const tipos = [...new Set(campanaActual.prospectos.map(p => p.tipo).filter(Boolean))].sort();
+  const fTipo = document.getElementById('fCampTipo');
+  fTipo.innerHTML = '<option value="">Todos los tipos</option>' + tipos.map(t => `<option value="${escAttr(t)}">${escHtml(t)}</option>`).join('');
+  document.getElementById('qCamp').value = '';
+  document.getElementById('fCampEstado').value = '';
+  fTipo.value = '';
+  renderProspectos();
+}
+
+function renderProspectos() {
+  if (!campanaActual) return;
+  const q = document.getElementById('qCamp').value.toLowerCase();
+  const fE = document.getElementById('fCampEstado').value;
+  const fT = document.getElementById('fCampTipo').value;
+  const prospectos = campanaActual.prospectos.filter(p =>
+    (!q || (p.nombre||'').toLowerCase().includes(q) || (p.tipo||'').toLowerCase().includes(q)) &&
+    (!fE || p._estado === fE) &&
+    (!fT || p.tipo === fT)
+  );
+
+  // Stats
+  const all = campanaActual.prospectos;
+  const stats = {
+    total: all.length,
+    pendiente: all.filter(p => p._estado === 'pendiente').length,
+    contactado: all.filter(p => p._estado === 'contactado').length,
+    agregado: all.filter(p => p._estado === 'agregado').length,
+    descartado: all.filter(p => p._estado === 'descartado').length,
+  };
+  document.getElementById('campStats').innerHTML = `
+    <div class="camp-stat"><span class="camp-stat-val">${stats.total}</span><span class="camp-stat-lbl">Total</span></div>
+    <div class="camp-stat"><span class="camp-stat-val" style="color:var(--muted)">${stats.pendiente}</span><span class="camp-stat-lbl">Pendientes</span></div>
+    <div class="camp-stat"><span class="camp-stat-val" style="color:var(--yellow)">${stats.contactado}</span><span class="camp-stat-lbl">Contactados</span></div>
+    <div class="camp-stat"><span class="camp-stat-val" style="color:var(--green)">${stats.agregado}</span><span class="camp-stat-lbl">En CRM</span></div>
+    <div class="camp-stat"><span class="camp-stat-val" style="color:var(--red)">${stats.descartado}</span><span class="camp-stat-lbl">Descartados</span></div>`;
+
+  document.getElementById('campCount').textContent = `${prospectos.length} prospecto${prospectos.length !== 1 ? 's' : ''}`;
+  const grid = document.getElementById('prospGrid');
+  const empty = document.getElementById('emptyProsp');
+  grid.innerHTML = '';
+  if (!prospectos.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const canAct = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
+  prospectos.forEach(p => {
+    const c = p.contacto || {};
+    const ad = p.auditoria_digital || {};
+    const ou = p.outreach || {};
+    const problemas = ad.problemas || [];
+    const redes = (c.redes || []).map(r => `<a href="https://${r}" target="_blank" rel="noopener">${escHtml(r)}</a>`).join(', ');
+
+    const div = document.createElement('div');
+    div.className = `prosp-card estado-${p._estado}`;
+    div.innerHTML = `
+      <div>
+        <div class="prosp-nombre">${escHtml(p.nombre)}</div>
+        <div class="prosp-tipo">${escHtml(p.tipo||'')} ${p.zona ? '· ' + escHtml(p.zona) : ''}</div>
+      </div>
+      <div class="prosp-contacto">
+        ${c.telefono ? `<span>📞 <a href="tel:${escAttr(c.telefono)}">${escHtml(c.telefono)}</a></span>` : ''}
+        ${c.direccion ? `<span>📍 ${escHtml(c.direccion)}</span>` : ''}
+        ${c.email ? `<span>✉️ <a href="mailto:${escAttr(c.email)}">${escHtml(c.email)}</a></span>` : ''}
+        ${redes ? `<span>🌐 ${redes}</span>` : ''}
+        ${c.web ? `<span>🔗 <a href="${escAttr(c.web)}" target="_blank" rel="noopener">${escHtml(c.web)}</a></span>` : ''}
+      </div>
+      ${problemas.length ? `<div class="prosp-problemas">${problemas.map(pr=>`<div class="prosp-problema-item"><span>⚠</span><span>${escHtml(pr)}</span></div>`).join('')}</div>` : ''}
+      ${ou.mensaje_es ? `<div class="prosp-mensaje">${escHtml(ou.mensaje_es)}</div>` : ''}
+      ${ad.notas ? `<div style="font-size:11px;color:var(--muted);font-style:italic">${escHtml(ad.notas)}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <span class="prosp-estado-badge pe-${p._estado}">${{pendiente:'Pendiente',contactado:'Contactado',agregado:'En CRM',descartado:'Descartado'}[p._estado]||p._estado}</span>
+        ${canAct ? `<div class="prosp-actions">
+          ${p._estado === 'pendiente' ? `<button class="btn btn-warning btn-sm" onclick="marcarContactado('${campanaActual.id}',${p.id})">📞 Contactado</button>` : ''}
+          ${p._estado !== 'agregado' ? `<button class="btn btn-success btn-sm" onclick="agregarAlCRM('${campanaActual.id}',${p.id})">➕ Al CRM</button>` : ''}
+          ${p._estado !== 'descartado' ? `<button class="btn btn-danger btn-sm" onclick="descartarProspecto('${campanaActual.id}',${p.id})">✕</button>` : ''}
+        </div>` : ''}
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+async function actualizarEstadoProspecto(campId, pid, cambios) {
+  await api('PUT', `/api/campanas/${campId}/prospecto/${pid}`, cambios);
+  const cidx = campanas.findIndex(c => c.id === campId);
+  if (cidx < 0) return;
+  const pidx = campanas[cidx].prospectos.findIndex(p => p.id === pid);
+  if (pidx < 0) return;
+  campanas[cidx].prospectos[pidx] = { ...campanas[cidx].prospectos[pidx], ...cambios };
+  if (campanaActual?.id === campId) campanaActual = campanas[cidx];
+  renderProspectos();
+}
+
+async function marcarContactado(campId, pid) {
+  await actualizarEstadoProspecto(campId, pid, { _estado: 'contactado' });
+  showToast('📞 Marcado como contactado');
+}
+
+async function descartarProspecto(campId, pid) {
+  await actualizarEstadoProspecto(campId, pid, { _estado: 'descartado' });
+  showToast('✕ Prospecto descartado');
+}
+
+async function agregarAlCRM(campId, pid) {
+  const camp = campanas.find(c => c.id === campId);
+  const p = camp?.prospectos.find(x => x.id === pid);
+  if (!p) return;
+  // Crear cliente en CRM con los datos del prospecto
+  const nuevo = {
+    id: Date.now(),
+    nombre: p.nombre,
+    grupo: 'Leve',
+    estado: 'Sin contactar',
+    notas: [p.tipo, p.auditoria_digital?.notas].filter(Boolean).join(' — '),
+    proximaAccion: '',
+    valor: 0,
+    telefono: p.contacto?.telefono || '',
+    origen: `Campaña: ${camp.campana.zona || campId}`,
+  };
+  clientes.push(nuevo);
+  await api('POST', '/api/clientes', clientes);
+  await actualizarEstadoProspecto(campId, pid, { _estado: 'agregado' });
+  showToast(`✅ ${p.nombre} agregado al CRM`);
+}
+
+function initCampanas() {
+  const isAdmin = SESSION.user.rol === 'admin';
+  document.getElementById('btnImportCamp').style.display = isAdmin ? '' : 'none';
+  document.getElementById('btnEliminarCamp').style.display = 'none';
+  renderSelectorCampanas();
+}
 
 // ═══════════════════════════════════════════════════
 // BOOT

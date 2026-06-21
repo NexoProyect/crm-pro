@@ -262,6 +262,40 @@ app.delete('/api/proyectos/:id', auth(['admin']), async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── CAMPAÑAS ──────────────────────────────────────────────────────────────────
+app.get('/api/campanas', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
+  res.json(await read('campanas'));
+});
+
+app.post('/api/campanas', auth(['admin']), async (req, res) => {
+  const campanas = await read('campanas');
+  const { campana, prospectos } = req.body;
+  if (!campana || !prospectos) return res.status(400).json({ error: 'JSON inválido: falta campana o prospectos' });
+  const existente = campanas.findIndex(c => c.campana.id === campana.id);
+  const nueva = { id: campana.id, campana, prospectos: prospectos.map(p => ({ ...p, _estado: p.outreach?.estado || 'pendiente' })), importadoEn: new Date().toISOString(), importadoPor: req.user.nombre };
+  if (existente >= 0) { campanas[existente] = nueva; }
+  else { campanas.push(nueva); }
+  await write('campanas', campanas);
+  res.json({ ok: true, total: prospectos.length });
+});
+
+// Actualizar estado de un prospecto dentro de una campaña
+app.put('/api/campanas/:id/prospecto/:pid', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
+  const campanas = await read('campanas');
+  const idx = campanas.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Campaña no encontrada' });
+  const pidx = campanas[idx].prospectos.findIndex(p => p.id === parseInt(req.params.pid));
+  if (pidx === -1) return res.status(404).json({ error: 'Prospecto no encontrado' });
+  campanas[idx].prospectos[pidx] = { ...campanas[idx].prospectos[pidx], ...req.body };
+  await write('campanas', campanas);
+  res.json({ ok: true });
+});
+
+app.delete('/api/campanas/:id', auth(['admin']), async (req, res) => {
+  await write('campanas', (await read('campanas')).filter(c => c.id !== req.params.id));
+  res.json({ ok: true });
+});
+
 // ── Static ────────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 

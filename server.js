@@ -2,19 +2,20 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const crypto  = require('crypto');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 app.use(express.json());
 
 function hash(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 
-const IS_VERCEL = !!process.env.VERCEL;
-const DB_DIR    = path.join(__dirname, 'db');
-const ADMIN_PASS = hash(process.env.ADMIN_PASSWORD || 'admin123');
-// Secret for signing stateless tokens — stable across all Vercel instances
+const IS_VERCEL   = !!process.env.VERCEL;
+const DB_DIR      = path.join(__dirname, 'db');
+const ADMIN_PASS  = hash(process.env.ADMIN_PASSWORD || 'admin123');
 const TOKEN_SECRET = process.env.TOKEN_SECRET || 'crmpro-secret-2024-nexo';
+const MONGODB_URI  = process.env.MONGODB_URI;
 
-// ── Stateless signed tokens (work across all serverless instances) ────────────
+// ── Tokens ────────────────────────────────────────────────────────────────────
 function signToken(payload) {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const sig  = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64url');
@@ -30,52 +31,92 @@ function verifyToken(token) {
   } catch { return null; }
 }
 
-// ── In-memory store ────────────────────────────────────────────────────────────
-let _store = { clientes: null, usuarios: null, cotizaciones: null, proyectos: null };
+// ── DB layer ──────────────────────────────────────────────────────────────────
+// MongoDB: one document per collection key, shape: { _id: key, data: [...] }
+// Local:   JSON files in db/
 
-function readJsonFile(filename, fallback) {
-  try { return JSON.parse(fs.readFileSync(path.join(DB_DIR, filename), 'utf8')); }
-  catch { return fallback; }
-}
+let _mongoClient = null;
+let _db = null;
 
-function initStore() {
-  const adminUser = { id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com', password: ADMIN_PASS, rol: 'admin', activo: true, avatar: 'JG', creado: new Date().toISOString() };
-  if (IS_VERCEL) {
-    _store.clientes     = readJsonFile('clientes.json', []);
-    _store.cotizaciones = readJsonFile('cotizaciones.json', []);
-    _store.proyectos    = readJsonFile('proyectos.json', []);
-    _store.usuarios     = [adminUser];
-  } else {
-    const defaults = {
-      'clientes.json': [], 'cotizaciones.json': [], 'proyectos.json': [],
-      'usuarios.json': [adminUser],
-    };
-    if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
-    Object.entries(defaults).forEach(([f, d]) => {
-      const p = path.join(DB_DIR, f);
-      if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify(d, null, 2));
-    });
+async function getDb() {
+  if (_db) return _db;
+  if (!_mongoClient) {
+    _mongoClient = new MongoClient(MONGODB_URI);
+    await _mongoClient.connect();
   }
+  _db = _mongoClient.db('crmpro');
+  return _db;
 }
-initStore();
 
-function read(key) {
-  if (IS_VERCEL) return _store[key];
-  return JSON.parse(fs.readFileSync(path.join(DB_DIR, key + '.json'), 'utf8'));
+const adminUser = {
+  id: 1,
+  nombre: 'Johangel',
+  email: 'sm8contact@gmail.com',
+  password: ADMIN_PASS,
+  rol: 'admin',
+  activo: true,
+  avatar: 'JG',
+  creado: new Date().toISOString(),
+};
+
+async function read(key) {
+  if (MONGODB_URI) {
+    const db  = await getDb();
+    const doc = await db.collection('store').findOne({ _id: key });
+    // Seed admin on first read of usuarios if collection is empty
+    if (key === 'usuarios') {
+      if (!doc || !doc.data || doc.data.length === 0) {
+        await db.collection('store').updateOne(
+          { _id: 'usuarios' },
+          { $setOnInsert: { _id: 'usuarios', data: [adminUser] } },
+          { upsert: true }
+        );
+        return [adminUser];
+      }
+    }
+    return doc ? doc.data : [];
+  }
+  // Local filesystem
+  try { return JSON.parse(fs.readFileSync(path.join(DB_DIR, key + '.json'), 'utf8')); }
+  catch { return []; }
 }
-function write(key, data) {
-  if (IS_VERCEL) { _store[key] = data; return; }
+
+async function write(key, data) {
+  if (MONGODB_URI) {
+    const db = await getDb();
+    await db.collection('store').updateOne(
+      { _id: key },
+      { $set: { data } },
+      { upsert: true }
+    );
+    return;
+  }
   fs.writeFileSync(path.join(DB_DIR, key + '.json'), JSON.stringify(data, null, 2));
 }
 
+// Local-only: init JSON files if missing
+function initLocalStore() {
+  if (MONGODB_URI) return;
+  const defaults = {
+    'clientes.json': [], 'cotizaciones.json': [], 'proyectos.json': [],
+    'usuarios.json': [adminUser],
+  };
+  if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+  Object.entries(defaults).forEach(([f, d]) => {
+    const p = path.join(DB_DIR, f);
+    if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify(d, null, 2));
+  });
+}
+initLocalStore();
+
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function auth(roles = []) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const raw = req.headers['x-token'];
     if (!raw) return res.status(401).json({ error: 'No autenticado' });
     const payload = verifyToken(raw);
     if (!payload) return res.status(401).json({ error: 'Token inválido' });
-    const usuarios = read('usuarios');
+    const usuarios = await read('usuarios');
     const user = usuarios.find(u => u.id === payload.id && u.activo);
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
     if (roles.length && !roles.includes(user.rol)) return res.status(403).json({ error: 'Sin permiso' });
@@ -85,105 +126,103 @@ function auth(roles = []) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
-  const usuarios = read('usuarios');
+  const usuarios = await read('usuarios');
   const user = usuarios.find(u => u.email === email && u.password === hash(password) && u.activo);
   if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' });
   const token = signToken({ id: user.id, rol: user.rol });
   res.json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, avatar: user.avatar } });
 });
 
-app.post('/api/logout', (req, res) => {
-  // Stateless tokens: logout is handled client-side by deleting the token
-  res.json({ ok: true });
-});
+app.post('/api/logout', (req, res) => res.json({ ok: true }));
 
-app.get('/api/me', auth(), (req, res) => {
+app.get('/api/me', auth(), async (req, res) => {
   const { password, ...safe } = req.user;
   res.json(safe);
 });
 
-// ── CLIENTES ─────────────────────────────────────────────────────────────────
-app.get('/api/clientes', auth(), (req, res) => res.json(read('clientes')));
-app.post('/api/clientes', auth(['admin', 'vendedor']), (req, res) => {
-  write('clientes', req.body);
+// ── CLIENTES ──────────────────────────────────────────────────────────────────
+app.get('/api/clientes', auth(), async (req, res) => res.json(await read('clientes')));
+
+app.post('/api/clientes', auth(['admin', 'vendedor']), async (req, res) => {
+  await write('clientes', req.body);
   res.json({ ok: true });
 });
 
-// ── USUARIOS ─────────────────────────────────────────────────────────────────
-app.get('/api/usuarios', auth(['admin']), (req, res) => {
-  res.json(read('usuarios').map(({ password, ...u }) => u));
+// ── USUARIOS ──────────────────────────────────────────────────────────────────
+app.get('/api/usuarios', auth(['admin']), async (req, res) => {
+  res.json((await read('usuarios')).map(({ password, ...u }) => u));
 });
 
-app.post('/api/usuarios', auth(['admin']), (req, res) => {
-  const usuarios = read('usuarios');
+app.post('/api/usuarios', auth(['admin']), async (req, res) => {
+  const usuarios = await read('usuarios');
   const { nombre, email, password, rol, avatar } = req.body;
   if (usuarios.find(u => u.email === email)) return res.status(400).json({ error: 'Email ya registrado' });
   const nuevo = { id: Date.now(), nombre, email, password: hash(password), rol, activo: true, avatar: avatar || nombre.slice(0, 2).toUpperCase(), creado: new Date().toISOString() };
   usuarios.push(nuevo);
-  write('usuarios', usuarios);
+  await write('usuarios', usuarios);
   const { password: _, ...safe } = nuevo;
   res.json(safe);
 });
 
-app.put('/api/usuarios/:id', auth(['admin']), (req, res) => {
-  const usuarios = read('usuarios');
+app.put('/api/usuarios/:id', auth(['admin']), async (req, res) => {
+  const usuarios = await read('usuarios');
   const idx = usuarios.findIndex(u => u.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   const { password, ...rest } = req.body;
   usuarios[idx] = { ...usuarios[idx], ...rest };
   if (password) usuarios[idx].password = hash(password);
-  write('usuarios', usuarios);
+  await write('usuarios', usuarios);
   res.json({ ok: true });
 });
 
-app.delete('/api/usuarios/:id', auth(['admin']), (req, res) => {
+app.delete('/api/usuarios/:id', auth(['admin']), async (req, res) => {
   const uid = parseInt(req.params.id);
   if (uid === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
-  const usuarios = read('usuarios').map(u => u.id === uid ? { ...u, activo: false } : u);
-  write('usuarios', usuarios);
+  const usuarios = (await read('usuarios')).map(u => u.id === uid ? { ...u, activo: false } : u);
+  await write('usuarios', usuarios);
   res.json({ ok: true });
 });
 
-// ── COTIZACIONES ─────────────────────────────────────────────────────────────
-app.get('/api/cotizaciones', auth(), (req, res) => res.json(read('cotizaciones')));
+// ── COTIZACIONES ──────────────────────────────────────────────────────────────
+app.get('/api/cotizaciones', auth(), async (req, res) => res.json(await read('cotizaciones')));
 
-app.post('/api/cotizaciones', auth(['admin', 'vendedor']), (req, res) => {
-  const cots = read('cotizaciones');
+app.post('/api/cotizaciones', auth(['admin', 'vendedor']), async (req, res) => {
+  const cots = await read('cotizaciones');
   const nueva = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), estado: req.body.estado || 'borrador' };
   cots.push(nueva);
-  write('cotizaciones', cots);
+  await write('cotizaciones', cots);
   res.json(nueva);
 });
 
-app.put('/api/cotizaciones/:id', auth(['admin', 'vendedor']), (req, res) => {
-  const cots = read('cotizaciones');
+app.put('/api/cotizaciones/:id', auth(['admin', 'vendedor']), async (req, res) => {
+  const cots = await read('cotizaciones');
   const idx = cots.findIndex(c => c.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
   cots[idx] = { ...cots[idx], ...req.body, actualizadoEn: new Date().toISOString() };
-  write('cotizaciones', cots);
+  await write('cotizaciones', cots);
   res.json({ ok: true });
 });
 
-app.delete('/api/cotizaciones/:id', auth(['admin']), (req, res) => {
-  write('cotizaciones', read('cotizaciones').filter(c => c.id !== parseInt(req.params.id)));
+app.delete('/api/cotizaciones/:id', auth(['admin']), async (req, res) => {
+  await write('cotizaciones', (await read('cotizaciones')).filter(c => c.id !== parseInt(req.params.id)));
   res.json({ ok: true });
 });
 
 // ── PROYECTOS ─────────────────────────────────────────────────────────────────
-app.get('/api/proyectos', auth(), (req, res) => res.json(read('proyectos')));
+app.get('/api/proyectos', auth(), async (req, res) => res.json(await read('proyectos')));
 
-app.post('/api/proyectos', auth(['admin', 'vendedor']), (req, res) => {
-  const proyectos = read('proyectos');
+app.post('/api/proyectos', auth(['admin', 'vendedor']), async (req, res) => {
+  const proyectos = await read('proyectos');
   const nuevo = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), mensajes: [], estado: 'pendiente', progreso: 0 };
   proyectos.push(nuevo);
-  write('proyectos', proyectos);
+  await write('proyectos', proyectos);
   res.json(nuevo);
 });
 
-app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'desarrollador']), (req, res) => {
-  const proyectos = read('proyectos');
+app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'desarrollador']), async (req, res) => {
+  const proyectos = await read('proyectos');
   const idx = proyectos.findIndex(p => p.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   if (req.user.rol === 'desarrollador') {
@@ -192,35 +231,33 @@ app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'desarrollador']), (req
     proyectos[idx] = { ...proyectos[idx], ...req.body };
   }
   proyectos[idx].actualizadoEn = new Date().toISOString();
-  write('proyectos', proyectos);
+  await write('proyectos', proyectos);
   res.json({ ok: true });
 });
 
-app.post('/api/proyectos/:id/mensaje', auth(), (req, res) => {
-  const proyectos = read('proyectos');
+app.post('/api/proyectos/:id/mensaje', auth(), async (req, res) => {
+  const proyectos = await read('proyectos');
   const idx = proyectos.findIndex(p => p.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   if (!proyectos[idx].mensajes) proyectos[idx].mensajes = [];
   const msg = { id: Date.now(), texto: req.body.texto, tipo: req.body.tipo || 'mensaje', autor: req.user.nombre, autorRol: req.user.rol, fecha: new Date().toISOString() };
   proyectos[idx].mensajes.push(msg);
-  write('proyectos', proyectos);
+  await write('proyectos', proyectos);
   res.json(msg);
 });
 
-app.delete('/api/proyectos/:id', auth(['admin']), (req, res) => {
-  write('proyectos', read('proyectos').filter(p => p.id !== parseInt(req.params.id)));
+app.delete('/api/proyectos/:id', auth(['admin']), async (req, res) => {
+  await write('proyectos', (await read('proyectos')).filter(p => p.id !== parseInt(req.params.id)));
   res.json({ ok: true });
 });
 
-// Static files AFTER all API routes
+// ── Static ────────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all: serve index.html for any non-API route (Express 5 syntax)
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Local dev server (not used by Vercel)
 if (!IS_VERCEL) {
   app.listen(3000, () => console.log('CRM Pro → http://localhost:3000'));
 }

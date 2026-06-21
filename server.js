@@ -35,17 +35,30 @@ function verifyToken(token) {
 // MongoDB: one document per collection key, shape: { _id: key, data: [...] }
 // Local:   JSON files in db/
 
-let _mongoClient = null;
-let _db = null;
+let _clientPromise = null;
 
 async function getDb() {
-  if (_db) return _db;
-  if (!_mongoClient) {
-    _mongoClient = new MongoClient(MONGODB_URI);
-    await _mongoClient.connect();
+  if (!_clientPromise) {
+    const client = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 10000,
+    });
+    _clientPromise = client.connect().then(c => c.db('crmpro'));
   }
-  _db = _mongoClient.db('crmpro');
-  return _db;
+  try {
+    const db = await _clientPromise;
+    // Ping to detect stale connection and reconnect if needed
+    await db.command({ ping: 1 });
+    return db;
+  } catch {
+    _clientPromise = null;
+    const client = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 10000,
+    });
+    _clientPromise = client.connect().then(c => c.db('crmpro'));
+    return await _clientPromise;
+  }
 }
 
 const adminUser = {

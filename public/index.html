@@ -330,6 +330,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .perm-yes{color:var(--green);font-size:14px}
 .perm-no{color:var(--border);font-size:14px}
 
+/* RENDIMIENTO */
+.score-bar{height:8px;border-radius:4px;background:var(--border);overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
+.score-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .4s}
+.rend-score{display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+/* COMISIONES */
+.com-proyecto-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface2);cursor:pointer;transition:background .15s;user-select:none}
+.com-proyecto-row:hover{background:rgba(99,102,241,.08)}
+.com-proyecto-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.com-persona-row{display:flex;align-items:center;gap:10px}
+.com-persona-label{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.com-pct-input{width:70px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;text-align:right;outline:none}
+.com-pct-input:focus{border-color:var(--accent)}
+.com-result-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:10px;background:var(--surface2);margin-bottom:8px}
+.com-result-name{font-size:14px;font-weight:700}
+.com-result-amount{font-size:20px;font-weight:800;color:var(--green)}
+.com-result-pct{font-size:12px;color:var(--muted)}
 /* CALENDARIO */
 .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .cal-mes-titulo{font-size:18px;font-weight:800;letter-spacing:-.3px;text-transform:capitalize;flex:1;text-align:center}
@@ -566,17 +582,88 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="header-left"><h1>Reportes</h1><p>Análisis de datos</p></div>
     <div class="header-actions"><button class="btn btn-success" onclick="exportExcel()">📊 Exportar Excel</button></div>
   </div>
-  <div class="metrics" style="margin-bottom:20px">
-    <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="rTotal">—</div><div class="metric-sub">prospectos</div></div>
-    <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="rClientes">—</div><div class="metric-sub">activos</div></div>
-    <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="rConv">—</div><div class="metric-sub">tasa</div></div>
-    <div class="metric-card c4"><div class="metric-icon">💰</div><div class="metric-label">Cotizaciones</div><div class="metric-value" id="rCots">—</div><div class="metric-sub">creadas</div></div>
+
+  <!-- Tabs solo admin ve Rendimiento y Comisiones -->
+  <div class="tickets-tabs" id="reportesTabs" style="margin-bottom:20px">
+    <div class="tickets-tab active" data-rtab="general" onclick="switchReporteTab('general')">General</div>
+    <div class="tickets-tab admin-only" data-rtab="rendimiento" onclick="switchReporteTab('rendimiento')" style="display:none">Rendimiento</div>
+    <div class="tickets-tab admin-only" data-rtab="comisiones" onclick="switchReporteTab('comisiones')" style="display:none">Comisiones</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-    <div class="panel"><div class="panel-header"><span class="panel-title">Por Grupo</span></div><div style="padding:20px;height:240px"><canvas id="chartBar"></canvas></div></div>
-    <div class="panel"><div class="panel-header"><span class="panel-title">Por Estado</span></div><div style="padding:20px;height:240px"><canvas id="chartPie"></canvas></div></div>
+
+  <!-- ── Tab: General ── -->
+  <div id="rtab-general">
+    <div class="metrics" style="margin-bottom:20px">
+      <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="rTotal">—</div><div class="metric-sub">prospectos</div></div>
+      <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="rClientes">—</div><div class="metric-sub">activos</div></div>
+      <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="rConv">—</div><div class="metric-sub">tasa</div></div>
+      <div class="metric-card c4"><div class="metric-icon">💰</div><div class="metric-label">Cotizaciones</div><div class="metric-value" id="rCots">—</div><div class="metric-sub">creadas</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="panel"><div class="panel-header"><span class="panel-title">Por Grupo</span></div><div style="padding:20px;height:240px"><canvas id="chartBar"></canvas></div></div>
+      <div class="panel"><div class="panel-header"><span class="panel-title">Por Estado</span></div><div style="padding:20px;height:240px"><canvas id="chartPie"></canvas></div></div>
+    </div>
+    <div class="panel"><div class="panel-header"><span class="panel-title">Resumen por Estado</span></div><div class="panel-body"><table><thead><tr><th>Estado</th><th>Cantidad</th><th>% del Total</th></tr></thead><tbody id="tbEstados"></tbody></table></div></div>
   </div>
-  <div class="panel"><div class="panel-header"><span class="panel-title">Resumen por Estado</span></div><div class="panel-body"><table><thead><tr><th>Estado</th><th>Cantidad</th><th>% del Total</th></tr></thead><tbody id="tbEstados"></tbody></table></div></div>
+
+  <!-- ── Tab: Rendimiento ── -->
+  <div id="rtab-rendimiento" style="display:none">
+    <div class="metrics" style="margin-bottom:20px" id="rendMetrics"></div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Rendimiento por empleado</span></div>
+      <div class="table-wrap">
+        <table class="user-table" id="rendTable">
+          <thead>
+            <tr>
+              <th>Empleado</th>
+              <th>Rol</th>
+              <th style="text-align:center">Cotizaciones</th>
+              <th style="text-align:center">Proyectos</th>
+              <th style="text-align:center">Tickets creados</th>
+              <th style="text-align:center">Tickets resueltos</th>
+              <th style="text-align:center">Clientes contactados</th>
+              <th style="text-align:center">Score</th>
+            </tr>
+          </thead>
+          <tbody id="rendBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Comisiones ── -->
+  <div id="rtab-comisiones" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <!-- Selección de proyectos -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Seleccionar proyectos</span></div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Marca los proyectos a incluir en el cálculo</div>
+          <div id="comProyList" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto"></div>
+          <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:var(--muted)">Total seleccionado</span>
+            <span style="font-size:18px;font-weight:800;color:var(--green)" id="comTotalSel">$0.00</span>
+          </div>
+        </div>
+      </div>
+      <!-- Distribución de porcentajes -->
+      <div class="panel">
+        <div class="panel-header" style="justify-content:space-between">
+          <span class="panel-title">Distribución (%)</span>
+          <span id="comPorcSuma" style="font-size:12px;font-weight:700;color:var(--green)">0% / 100%</span>
+        </div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:10px" id="comPersonas"></div>
+        <div style="padding:14px;padding-top:0">
+          <div id="comWarning" style="display:none;font-size:12px;color:var(--red);margin-bottom:10px">⚠️ Los porcentajes deben sumar 100%</div>
+          <button class="btn btn-primary" style="width:100%" onclick="calcularComisiones()">Calcular</button>
+        </div>
+      </div>
+    </div>
+    <!-- Resultado -->
+    <div class="panel" id="comResultado" style="margin-top:20px;display:none">
+      <div class="panel-header"><span class="panel-title">Resultado de comisiones</span></div>
+      <div style="padding:14px" id="comResultBody"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ TICKETS ═══════════ -->
@@ -1069,6 +1156,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
       <div class="form-group"><label class="form-label">Fecha límite</label><input class="form-input" id="projFechaLimite" type="date"></div>
+      <div class="form-group"><label class="form-label">Valor del proyecto ($)</label><input class="form-input" id="projValor" type="number" min="0" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="cerrarModal('modalProj')">Cancelar</button>
@@ -1813,7 +1901,25 @@ document.getElementById('fSegGrupo').addEventListener('change', renderSeguimient
 // ═══════════════════════════════════════════════════
 // REPORTES
 // ═══════════════════════════════════════════════════
+let reporteTabActual = 'general';
+
+function switchReporteTab(tab) {
+  reporteTabActual = tab;
+  document.querySelectorAll('#reportesTabs .tickets-tab').forEach(t => t.classList.toggle('active', t.dataset.rtab === tab));
+  ['general','rendimiento','comisiones'].forEach(t => {
+    const el = document.getElementById('rtab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'rendimiento') renderRendimiento();
+  if (tab === 'comisiones')  initComisiones();
+}
+
 function renderReportes() {
+  // Mostrar tabs admin
+  if (SESSION.user.rol === 'admin') {
+    document.querySelectorAll('#reportesTabs .admin-only').forEach(t => t.style.display = '');
+  }
+  // Siempre renderiza general
   const total=clientes.length, cli=clientes.filter(x=>x.estado==='Cliente').length;
   document.getElementById('rTotal').textContent   = total;
   document.getElementById('rClientes').textContent= cli;
@@ -1831,6 +1937,201 @@ function renderReportes() {
   chartPie=new Chart(document.getElementById('chartPie'),{type:'doughnut',data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),backgroundColor:Object.keys(estados).map(e=>ESTADO_COLORS[e]||'#64748b'),borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:10,font:{size:11}}}}}});
 
   document.getElementById('tbEstados').innerHTML = Object.entries(estados).sort((a,b)=>b[1]-a[1]).map(([e,n])=>`<tr><td><span class="dot" style="background:${ESTADO_COLORS[e]||'#64748b'};display:inline-block;margin-right:8px"></span>${e}</td><td><strong>${n}</strong></td><td>${((n/Math.max(total,1))*100).toFixed(1)}%</td></tr>`).join('');
+
+  // Si ya estaba en otra tab, vuelve a mostrarla
+  if (reporteTabActual !== 'general') switchReporteTab(reporteTabActual);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDIMIENTO
+// ═══════════════════════════════════════════════════
+function renderRendimiento() {
+  const tbody = document.getElementById('rendBody');
+  const metricsEl = document.getElementById('rendMetrics');
+  if (!tbody) return;
+
+  // Excluir admin del listado de empleados (nos mostramos aparte arriba)
+  const empleados = usuarios.filter(u => u.activo !== false);
+
+  // Calcular métricas por usuario
+  const stats = empleados.map(u => {
+    const cots      = cotizaciones.filter(c => c.creadoPorId === u.id || c.creadoPorNombre === u.nombre).length;
+    const proyects  = proyectos.filter(p => p.clienteNombre && (p.creadoPorId === u.id || p.vendedorNombre === u.nombre || p.vendedorId === u.id)).length;
+    const tCreados  = tickets.filter(t => t.autorId === u.id).length;
+    const tResueltos= tickets.filter(t => t.autorId === u.id && ['resuelto','cerrado'].includes(t.estado)).length;
+    // Clientes donde el último estado no es "Sin contactar" — proxy de contacto activo
+    const contactados = clientes.filter(c => c.estado !== 'Sin contactar' && c.estado !== 'Mayor prioridad').length;
+    // Score ponderado: cots*3 + proyects*4 + tResueltos*2 + tCreados*1
+    const score = cots * 3 + proyects * 4 + tResueltos * 2 + tCreados;
+    return { u, cots, proyects, tCreados, tResueltos, contactados, score };
+  });
+
+  const maxScore = Math.max(...stats.map(s => s.score), 1);
+
+  // Métricas resumen
+  const totalCots   = cotizaciones.length;
+  const totalProys  = proyectos.length;
+  const totalTicks  = tickets.length;
+  const ticksAbiertos = tickets.filter(t => ['abierto','en-progreso'].includes(t.estado)).length;
+  metricsEl.innerHTML = `
+    <div class="metric-card c1"><div class="metric-icon">📄</div><div class="metric-label">Cotizaciones</div><div class="metric-value">${totalCots}</div><div class="metric-sub">total creadas</div></div>
+    <div class="metric-card c2"><div class="metric-icon">💻</div><div class="metric-label">Proyectos</div><div class="metric-value">${totalProys}</div><div class="metric-sub">en sistema</div></div>
+    <div class="metric-card c3"><div class="metric-icon">🎫</div><div class="metric-label">Tickets</div><div class="metric-value">${totalTicks}</div><div class="metric-sub">${ticksAbiertos} activos</div></div>
+    <div class="metric-card c4"><div class="metric-icon">👥</div><div class="metric-label">Empleados</div><div class="metric-value">${empleados.length}</div><div class="metric-sub">activos</div></div>`;
+
+  const avatarColors = {admin:'linear-gradient(135deg,#a855f7,#6366f1)',vendedor:'linear-gradient(135deg,#10b981,#3b82f6)',soporte:'linear-gradient(135deg,#3b82f6,#6366f1)',desarrollador:'linear-gradient(135deg,#f59e0b,#ef4444)'};
+
+  tbody.innerHTML = stats.sort((a,b) => b.score - a.score).map(({u, cots, proyects, tCreados, tResueltos, contactados, score}) => {
+    const pct = Math.round((score / maxScore) * 100);
+    const grad = avatarColors[u.rol] || 'linear-gradient(135deg,var(--accent),var(--purple))';
+    const ini = (u.nombre||'?').slice(0,2).toUpperCase();
+    const isMe = u.id === SESSION.user.id;
+    return `<tr${isMe?' style="background:rgba(99,102,241,.06)"':''}>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar" style="background:${grad};flex-shrink:0">${ini}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${escHtml(u.nombre)}${isMe?' <span style="font-size:10px;color:var(--muted)">(tú)</span>':''}</div>
+            <div style="font-size:11px;color:var(--muted)">${escHtml(u.email)}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge badge-${u.rol}">${ROL_LABELS[u.rol]||u.rol}</span></td>
+      <td style="text-align:center;font-weight:700">${cots}</td>
+      <td style="text-align:center;font-weight:700">${proyects}</td>
+      <td style="text-align:center;font-weight:700">${tCreados}</td>
+      <td style="text-align:center;font-weight:700">${tResueltos}</td>
+      <td style="text-align:center;font-weight:700">${contactados}</td>
+      <td style="text-align:center">
+        <div class="rend-score">
+          <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;font-weight:700">${score}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// COMISIONES
+// ═══════════════════════════════════════════════════
+let comSeleccionados = new Set();
+
+function initComisiones() {
+  const listEl = document.getElementById('comProyList');
+  const personasEl = document.getElementById('comPersonas');
+  if (!listEl || !personasEl) return;
+
+  // Lista de proyectos
+  const proysConValor = proyectos.filter(p => p.presupuesto > 0 || p.valor > 0 || p.total > 0);
+  const todosProys = proyectos.length ? proyectos : [];
+
+  listEl.innerHTML = todosProys.length === 0
+    ? '<div style="color:var(--muted);font-size:13px">No hay proyectos registrados</div>'
+    : todosProys.map(p => {
+        const val = p.presupuesto || p.valor || p.total || 0;
+        const checked = comSeleccionados.has(p.id) ? 'checked' : '';
+        return `<label class="com-proyecto-row" onclick="event.stopPropagation()">
+          <input type="checkbox" ${checked} onchange="comToggleProyecto(${p.id}, this.checked)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.nombre||p.clienteNombre||'Proyecto')}</div>
+            <div style="font-size:11px;color:var(--muted)">${escHtml(p.clienteNombre||'—')}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--green);flex-shrink:0">$${(val).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+        </label>`;
+      }).join('');
+
+  actualizarTotalSel();
+
+  // Lista de personas (todos los usuarios activos)
+  const personas = usuarios.filter(u => u.activo !== false);
+  const avatarColors = {admin:'linear-gradient(135deg,#a855f7,#6366f1)',vendedor:'linear-gradient(135deg,#10b981,#3b82f6)',soporte:'linear-gradient(135deg,#3b82f6,#6366f1)',desarrollador:'linear-gradient(135deg,#f59e0b,#ef4444)'};
+
+  personasEl.innerHTML = personas.map(u => {
+    const ini = (u.nombre||'?').slice(0,2).toUpperCase();
+    const grad = avatarColors[u.rol] || 'linear-gradient(135deg,var(--accent),var(--purple))';
+    return `<div class="com-persona-row">
+      <div class="avatar" style="background:${grad};flex-shrink:0;width:28px;height:28px;font-size:10px">${ini}</div>
+      <span class="com-persona-label">${escHtml(u.nombre)}${u.id===SESSION.user.id?' (tú)':''}</span>
+      <input class="com-pct-input" type="number" min="0" max="100" step="1" value="0"
+        data-uid="${u.id}" data-nombre="${escAttr(u.nombre)}"
+        oninput="actualizarSumaPorcentajes()">
+      <span style="font-size:12px;color:var(--muted)">%</span>
+    </div>`;
+  }).join('');
+
+  actualizarSumaPorcentajes();
+  document.getElementById('comResultado').style.display = 'none';
+}
+
+function comToggleProyecto(id, checked) {
+  if (checked) comSeleccionados.add(id);
+  else comSeleccionados.delete(id);
+  actualizarTotalSel();
+}
+
+function actualizarTotalSel() {
+  const total = proyectos
+    .filter(p => comSeleccionados.has(p.id))
+    .reduce((s, p) => s + (p.presupuesto || p.valor || p.total || 0), 0);
+  const el = document.getElementById('comTotalSel');
+  if (el) el.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits:2});
+}
+
+function actualizarSumaPorcentajes() {
+  const inputs = document.querySelectorAll('#comPersonas .com-pct-input');
+  const suma = Array.from(inputs).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
+  const sumaEl = document.getElementById('comPorcSuma');
+  const warn = document.getElementById('comWarning');
+  if (sumaEl) {
+    sumaEl.textContent = `${suma.toFixed(1)}% / 100%`;
+    sumaEl.style.color = Math.abs(suma - 100) < 0.01 ? 'var(--green)' : suma > 100 ? 'var(--red)' : 'var(--muted)';
+  }
+  if (warn) warn.style.display = (suma > 100) ? '' : 'none';
+}
+
+function calcularComisiones() {
+  const inputs = document.querySelectorAll('#comPersonas .com-pct-input');
+  const suma = Array.from(inputs).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
+  if (Math.abs(suma - 100) > 0.5) {
+    showToast('Los porcentajes deben sumar 100%', 'error');
+    document.getElementById('comWarning').style.display = '';
+    return;
+  }
+  if (comSeleccionados.size === 0) { showToast('Selecciona al menos un proyecto', 'error'); return; }
+
+  const total = proyectos
+    .filter(p => comSeleccionados.has(p.id))
+    .reduce((s, p) => s + (p.presupuesto || p.valor || p.total || 0), 0);
+
+  const proySelNombres = proyectos.filter(p => comSeleccionados.has(p.id)).map(p => p.nombre || p.clienteNombre || 'Proyecto').join(', ');
+
+  const resultados = Array.from(inputs)
+    .map(i => ({ nombre: i.dataset.nombre, pct: parseFloat(i.value)||0, monto: total * (parseFloat(i.value)||0) / 100 }))
+    .filter(r => r.pct > 0)
+    .sort((a, b) => b.monto - a.monto);
+
+  const panel = document.getElementById('comResultado');
+  const body = document.getElementById('comResultBody');
+  body.innerHTML = `
+    <div style="margin-bottom:16px;padding:12px 16px;background:var(--surface2);border-radius:10px;font-size:13px">
+      <div style="color:var(--muted);margin-bottom:4px">Proyectos incluidos</div>
+      <div style="font-weight:600">${escHtml(proySelNombres)}</div>
+      <div style="margin-top:8px;display:flex;gap:24px">
+        <div><span style="color:var(--muted)">Total: </span><strong style="color:var(--green)">${'$'+total.toLocaleString('en-US',{minimumFractionDigits:2})}</strong></div>
+        <div><span style="color:var(--muted)">Personas: </span><strong>${resultados.length}</strong></div>
+      </div>
+    </div>
+    ${resultados.map(r => `
+      <div class="com-result-row">
+        <div>
+          <div class="com-result-name">${escHtml(r.nombre)}</div>
+          <div class="com-result-pct">${r.pct}% del total</div>
+        </div>
+        <div class="com-result-amount">$${r.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+      </div>`).join('')}`;
+  panel.style.display = '';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ═══════════════════════════════════════════════════
@@ -1997,6 +2298,7 @@ function renderProyectos() {
         <div class="proj-meta-item"><label>Dev</label><span>${escHtml(p.devNombre||'Sin asignar')}</span></div>
         <div class="proj-meta-item"><label>Creado por</label><span>${escHtml(p.creadoPorNombre||'—')}</span></div>
         <div class="proj-meta-item"><label>Límite</label><span>${p.fechaLimite?fmtDate(p.fechaLimite):'—'}</span></div>
+        ${p.valor>0?`<div class="proj-meta-item" style="grid-column:span 2"><label>Valor</label><span style="color:var(--green);font-weight:700">$${(p.valor).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>`:''}
       </div>
       ${p.notasDev?`<div class="proj-notas">📝 ${escHtml(p.notasDev)}</div>`:''}
       <div>
@@ -2033,6 +2335,7 @@ function abrirModalProj(id=null) {
   document.getElementById('projProgreso').value=0;
   document.getElementById('progLabel').textContent='0';
   document.getElementById('projFechaLimite').value='';
+  document.getElementById('projValor').value='';
   if (id) {
     const p=proyectos.find(x=>x.id===id);
     if(p){
@@ -2047,6 +2350,7 @@ function abrirModalProj(id=null) {
       document.getElementById('projProgreso').value=p.progreso||0;
       document.getElementById('progLabel').textContent=p.progreso||0;
       document.getElementById('projFechaLimite').value=p.fechaLimite||'';
+      document.getElementById('projValor').value=p.valor||'';
     }
   }
   document.getElementById('modalProj').classList.add('open');
@@ -2069,7 +2373,10 @@ async function guardarProj() {
     notasDev:document.getElementById('projNotasDev').value,
     estado:document.getElementById('projEstado').value,
     progreso:parseInt(document.getElementById('projProgreso').value)||0,
-    fechaLimite:document.getElementById('projFechaLimite').value
+    fechaLimite:document.getElementById('projFechaLimite').value,
+    valor:parseFloat(document.getElementById('projValor').value)||0,
+    creadoPorId:SESSION.user.id,
+    creadoPorNombre:SESSION.user.nombre,
   };
   const eid=document.getElementById('projId').value;
   if(eid){await api('PUT',`/api/proyectos/${eid}`,payload);}

@@ -681,20 +681,37 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           </div>
         </div>
 
+        <!-- Fondo startup fijo -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700">Fondo Startup</div>
+            <div style="font-size:11px;color:var(--muted)">20% fijo no negociable — se descuenta antes de distribuir</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:800;color:var(--red)" id="hipFondoMonto">$0.00</div>
+            <div style="font-size:11px;color:var(--muted)">20%</div>
+          </div>
+        </div>
+
         <!-- Input monto + guardar preset -->
         <div style="display:flex;gap:8px;align-items:flex-end">
           <div style="flex:1">
-            <label class="form-label">Ganancia total</label>
+            <label class="form-label">Ganancia total bruta</label>
             <div style="display:flex;align-items:center">
               <span style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-size:14px;color:var(--muted)">$</span>
               <input class="form-input" id="hipMonto" type="number" min="0" step="0.01" placeholder="0.00"
                 style="border-radius:0 8px 8px 0;border-left:none" oninput="calcularHipotetico()">
             </div>
           </div>
-          <button class="btn btn-secondary" style="white-space:nowrap;padding:8px 14px" onclick="hipGuardarPreset()">＋ Guardar preset</button>
+          <div style="text-align:right;padding-bottom:2px">
+            <div style="font-size:11px;color:var(--muted)">Distribuible (80%)</div>
+            <div style="font-size:16px;font-weight:800;color:var(--green)" id="hipNeto">$0.00</div>
+          </div>
         </div>
 
         <div id="hipResultado" style="display:none;flex-direction:column;gap:8px"></div>
+
+        <button class="btn btn-secondary btn-sm" style="align-self:flex-start" onclick="hipGuardarPreset()">＋ Guardar como preset</button>
       </div>
     </div>
   </div>
@@ -2169,15 +2186,25 @@ function calcularComisiones() {
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+const HIP_STARTUP_PCT = 20;
+
 function calcularHipotetico() {
-  const monto = parseFloat(document.getElementById('hipMonto').value) || 0;
+  const bruto = parseFloat(document.getElementById('hipMonto').value) || 0;
+  const fondo = bruto * HIP_STARTUP_PCT / 100;
+  const neto  = bruto - fondo;
+
+  const fondoEl = document.getElementById('hipFondoMonto');
+  const netoEl  = document.getElementById('hipNeto');
+  if (fondoEl) fondoEl.textContent = '$' + fondo.toLocaleString('en-US', {minimumFractionDigits:2});
+  if (netoEl)  netoEl.textContent  = '$' + neto.toLocaleString('en-US',  {minimumFractionDigits:2});
+
   const el = document.getElementById('hipResultado');
   if (!el) return;
-  if (monto <= 0) { el.style.display = 'none'; return; }
+  if (bruto <= 0) { el.style.display = 'none'; return; }
 
   const inputs = document.querySelectorAll('#comPersonas .com-pct-input');
   const resultados = Array.from(inputs)
-    .map(i => ({ nombre: i.dataset.nombre, pct: parseFloat(i.value)||0, monto: monto * (parseFloat(i.value)||0) / 100 }))
+    .map(i => ({ nombre: i.dataset.nombre, pct: parseFloat(i.value)||0, monto: neto * (parseFloat(i.value)||0) / 100 }))
     .filter(r => r.pct > 0)
     .sort((a, b) => b.monto - a.monto);
 
@@ -2187,19 +2214,14 @@ function calcularHipotetico() {
     return;
   }
 
-  el.innerHTML = `
-    <div style="padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:13px;display:flex;justify-content:space-between;margin-bottom:4px">
-      <span style="color:var(--muted)">Monto total</span>
-      <strong style="color:var(--green)">$${monto.toLocaleString('en-US',{minimumFractionDigits:2})}</strong>
-    </div>
-    ${resultados.map(r => `
-      <div class="com-result-row">
-        <div>
-          <div class="com-result-name">${escHtml(r.nombre)}</div>
-          <div class="com-result-pct">${r.pct}% del total</div>
-        </div>
-        <div class="com-result-amount">$${r.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
-      </div>`).join('')}`;
+  el.innerHTML = resultados.map(r => `
+    <div class="com-result-row">
+      <div>
+        <div class="com-result-name">${escHtml(r.nombre)}</div>
+        <div class="com-result-pct">${r.pct}% del distribuible</div>
+      </div>
+      <div class="com-result-amount">$${r.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+    </div>`).join('');
   el.style.display = 'flex';
   el.style.flexDirection = 'column';
 }
@@ -2218,8 +2240,13 @@ function hipGuardarPreset() {
   if (!monto || monto <= 0) { showToast('Ingresa un monto primero', 'error'); return; }
   const nombre = prompt('Nombre para este preset (ej: "Web básica", "Pack premium"):');
   if (!nombre || !nombre.trim()) return;
+  // Captura los % actuales de cada persona
+  const porcentajes = {};
+  document.querySelectorAll('#comPersonas .com-pct-input').forEach(i => {
+    porcentajes[i.dataset.uid] = parseFloat(i.value) || 0;
+  });
   const presets = hipCargarPresets();
-  presets.push({ id: Date.now(), nombre: nombre.trim(), monto });
+  presets.push({ id: Date.now(), nombre: nombre.trim(), monto, porcentajes });
   hipGuardarPresets(presets);
   hipRenderPresets();
   showToast('Preset guardado');
@@ -2231,8 +2258,18 @@ function hipEliminarPreset(id) {
   hipRenderPresets();
 }
 
-function hipAplicarPreset(monto) {
-  document.getElementById('hipMonto').value = monto;
+function hipAplicarPreset(id) {
+  const preset = hipCargarPresets().find(p => p.id === id);
+  if (!preset) return;
+  document.getElementById('hipMonto').value = preset.monto;
+  // Restaura los % guardados
+  if (preset.porcentajes) {
+    document.querySelectorAll('#comPersonas .com-pct-input').forEach(i => {
+      const pct = preset.porcentajes[i.dataset.uid];
+      if (pct !== undefined) i.value = pct;
+    });
+    actualizarSumaPorcentajes();
+  }
   calcularHipotetico();
 }
 
@@ -2241,18 +2278,18 @@ function hipRenderPresets() {
   const empty = document.getElementById('hipPresetsEmpty');
   if (!container) return;
   const presets = hipCargarPresets();
-  if (!empty) {
-    // noop
-  } else {
-    empty.style.display = presets.length ? 'none' : '';
-  }
-  // Elimina chips anteriores (no el span de vacío)
+  if (empty) empty.style.display = presets.length ? 'none' : '';
   container.querySelectorAll('.hip-chip').forEach(c => c.remove());
   presets.forEach(p => {
+    const tienePorc = p.porcentajes && Object.values(p.porcentajes).some(v => v > 0);
     const chip = document.createElement('div');
     chip.className = 'hip-chip';
     chip.innerHTML = `
-      <span onclick="hipAplicarPreset(${p.monto})" style="cursor:pointer">${escHtml(p.nombre)} <strong>$${p.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</strong></span>
+      <span onclick="hipAplicarPreset(${p.id})" style="cursor:pointer">
+        ${escHtml(p.nombre)}
+        <strong>$${p.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</strong>
+        ${tienePorc ? '<span style="font-size:10px;color:var(--muted);margin-left:2px">+%</span>' : ''}
+      </span>
       <button onclick="hipEliminarPreset(${p.id})" title="Eliminar">×</button>`;
     container.appendChild(chip);
   });

@@ -876,7 +876,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </thead>
         <tbody>
           <tr><td>Ver clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
-          <tr><td>Editar / crear clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Editar / crear clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Crear cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Ver cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Crear proyectos dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
@@ -1590,7 +1590,7 @@ function applyRoleUI() {
     document.getElementById('dashActions').innerHTML = '';
   }
   // Clientes write
-  if (rol === 'soporte' || rol === 'desarrollador') {
+  if (rol === 'desarrollador') {
     const bc = document.getElementById('btnGuardarCli');
     const bn = document.getElementById('btnNuevoCli');
     if (bc) bc.style.display = 'none';
@@ -1667,7 +1667,7 @@ async function loadDesarrolladores() { const d = await api('GET','/api/usuarios/
 const GRUPOS = ['Critico','Medio','Leve','Confirmado'];
 
 function renderTable(tbId, emptyId, cntId, q, grupo, estado) {
-  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+  const canEdit = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
   const filtered = clientes.map((x,i) => ({...x,_idx:i})).filter(x =>
     (grupo === 'Todos' || x.grupo === grupo) &&
     (!estado || x.estado === estado) &&
@@ -1894,7 +1894,7 @@ function renderSeguimiento() {
   const fseg  = document.getElementById('fseg').value;
   const fGrp  = document.getElementById('fSegGrupo').value;
   const q     = (document.getElementById('qSeg')?.value || '').toLowerCase();
-  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+  const canEdit = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
 
   const seg = clientes.map((x,i)=>({...x,_idx:i})).filter(x =>
     SEG_ESTADOS.includes(x.estado) &&

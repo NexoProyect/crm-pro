@@ -205,7 +205,7 @@ app.get('/api/me', auth(), async (req, res) => {
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 app.get('/api/clientes', auth(), async (req, res) => res.json(await read('clientes')));
 
-app.post('/api/clientes', auth(['admin', 'vendedor']), async (req, res) => {
+app.post('/api/clientes', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
   await write('clientes', req.body);
   res.json({ ok: true });
 });

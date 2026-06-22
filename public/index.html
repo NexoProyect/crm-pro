@@ -658,10 +658,29 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
     </div>
-    <!-- Resultado -->
+    <!-- Resultado proyectos -->
     <div class="panel" id="comResultado" style="margin-top:20px;display:none">
       <div class="panel-header"><span class="panel-title">Resultado de comisiones</span></div>
       <div style="padding:14px" id="comResultBody"></div>
+    </div>
+
+    <!-- Caso hipotético -->
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-header"><span class="panel-title">Caso hipotético</span><span style="font-size:12px;color:var(--muted)">Ingresa cualquier monto y calcula sin seleccionar proyectos</span></div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div style="flex:1">
+            <label class="form-label">Ganancia total</label>
+            <div style="display:flex;align-items:center;gap:0">
+              <span style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-size:14px;color:var(--muted)">$</span>
+              <input class="form-input" id="hipMonto" type="number" min="0" step="0.01" placeholder="0.00"
+                style="border-radius:0 8px 8px 0;border-left:none" oninput="calcularHipotetico()">
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);padding-bottom:10px">Usa los % asignados arriba</div>
+        </div>
+        <div id="hipResultado" style="display:none;flex-direction:column;gap:8px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2132,6 +2151,41 @@ function calcularComisiones() {
       </div>`).join('')}`;
   panel.style.display = '';
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function calcularHipotetico() {
+  const monto = parseFloat(document.getElementById('hipMonto').value) || 0;
+  const el = document.getElementById('hipResultado');
+  if (!el) return;
+  if (monto <= 0) { el.style.display = 'none'; return; }
+
+  const inputs = document.querySelectorAll('#comPersonas .com-pct-input');
+  const resultados = Array.from(inputs)
+    .map(i => ({ nombre: i.dataset.nombre, pct: parseFloat(i.value)||0, monto: monto * (parseFloat(i.value)||0) / 100 }))
+    .filter(r => r.pct > 0)
+    .sort((a, b) => b.monto - a.monto);
+
+  if (resultados.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted)">Asigna porcentajes a las personas arriba primero.</div>';
+    el.style.display = 'flex';
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:13px;display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="color:var(--muted)">Monto total</span>
+      <strong style="color:var(--green)">$${monto.toLocaleString('en-US',{minimumFractionDigits:2})}</strong>
+    </div>
+    ${resultados.map(r => `
+      <div class="com-result-row">
+        <div>
+          <div class="com-result-name">${escHtml(r.nombre)}</div>
+          <div class="com-result-pct">${r.pct}% del total</div>
+        </div>
+        <div class="com-result-amount">$${r.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+      </div>`).join('')}`;
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
 }
 
 // ═══════════════════════════════════════════════════

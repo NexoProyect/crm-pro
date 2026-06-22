@@ -1619,7 +1619,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     item.classList.add('active');
     document.getElementById('page-' + item.dataset.page).classList.add('active');
     const pg = item.dataset.page;
-    if (pg === 'reportes')    renderReportes();
+    if (pg === 'reportes')    Promise.all([loadClientes(),loadCotizaciones(),loadProyectos()]).then(renderReportes);
     if (pg === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
     if (pg === 'clientes')    renderClientes();
     if (pg === 'cotizaciones')renderCotizaciones();
@@ -1834,7 +1834,7 @@ function navTo(page) {
   document.getElementById('page-' + page).classList.add('active');
   if (page === 'clientes')    renderClientes();
   if (page === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
-  if (page === 'reportes')    renderReportes();
+  if (page === 'reportes')    Promise.all([loadClientes(),loadCotizaciones(),loadProyectos()]).then(renderReportes);
   if (page === 'tickets')     { loadTickets().then(initTickets); }
   if (page === 'calendario')  { loadEventos().then(renderCalendario); }
 }

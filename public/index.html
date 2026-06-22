@@ -327,18 +327,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="header-actions" id="dashActions">
       <button class="btn btn-success" onclick="exportExcel()">📊 Excel</button>
       <button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button>
-      <button class="btn btn-primary" onclick="nuevo()">＋ Cliente</button>
+      <button class="btn btn-primary" onclick="irANuevoCliente()">＋ Cliente</button>
     </div>
   </div>
   <div class="metrics">
-    <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="t">—</div><div class="metric-sub">prospectos</div></div>
-    <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="c">—</div><div class="metric-sub">confirmados</div></div>
+    <div class="metric-card c1" style="cursor:pointer" onclick="navTo('clientes')"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="t">—</div><div class="metric-sub">prospectos</div></div>
+    <div class="metric-card c2" style="cursor:pointer" onclick="navTo('clientes')"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="c">—</div><div class="metric-sub">confirmados</div></div>
     <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="cv">—</div><div class="metric-sub">tasa</div></div>
-    <div class="metric-card c4"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="s">—</div><div class="metric-sub">activos</div></div>
+    <div class="metric-card c4" style="cursor:pointer" onclick="navTo('seguimiento')"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="s">—</div><div class="metric-sub">activos</div></div>
   </div>
   <div class="content-row">
     <div class="panel">
-      <div class="panel-header"><span class="panel-title">Clientes</span></div>
+      <div class="panel-header"><span class="panel-title">Vista rápida</span><button class="btn btn-secondary btn-sm" onclick="navTo('clientes')">Ver todos →</button></div>
       <div class="toolbar">
         <div class="search-wrap"><span class="search-icon">🔍</span><input id="q" placeholder="Buscar…"></div>
         <select class="filter-select" id="f"><option>Todos</option><option>Critico</option><option>Medio</option><option>Leve</option><option>Confirmado</option></select>
@@ -370,13 +370,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
   <div class="panel">
     <div class="toolbar">
-      <div class="search-wrap"><span class="search-icon">🔍</span><input id="q2" placeholder="Buscar…"></div>
+      <div class="search-wrap"><span class="search-icon">🔍</span><input id="q2" placeholder="Buscar por nombre…"></div>
       <select class="filter-select" id="f2"><option>Todos</option><option>Critico</option><option>Medio</option><option>Leve</option><option>Confirmado</option></select>
       <select class="filter-select" id="fe"><option value="">Todos los estados</option><option>Sin contactar</option><option>Llamado</option><option>WhatsApp</option><option>Seguimiento</option><option>Cliente</option><option>Mayor prioridad</option></select>
       <span class="count-badge" id="cnt2"></span>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th><th></th></tr></thead>
+      <table><thead><tr><th>Nombre</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th><th></th></tr></thead>
       <tbody id="tb2"></tbody></table>
       <div id="empty2" class="empty" style="display:none"><div class="empty-icon">👥</div><p>Sin clientes</p></div>
     </div>
@@ -417,20 +417,39 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div class="page" id="page-seguimiento">
   <div class="header">
     <div class="header-left"><h1>Seguimiento</h1><p>Clientes que requieren acción</p></div>
-    <div class="header-actions"><button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button></div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button>
+    </div>
   </div>
   <div class="metrics" style="margin-bottom:20px">
-    <div class="metric-card c4"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="segCount">—</div><div class="metric-sub">activos</div></div>
-    <div class="metric-card c1"><div class="metric-icon">🚨</div><div class="metric-label">Alta Prioridad</div><div class="metric-value" id="segAlta">—</div><div class="metric-sub">urgentes</div></div>
-    <div class="metric-card c3"><div class="metric-icon">📞</div><div class="metric-label">Sin Contactar</div><div class="metric-value" id="segSin">—</div><div class="metric-sub">nunca</div></div>
-    <div class="metric-card c2"><div class="metric-icon">💬</div><div class="metric-label">Contactados</div><div class="metric-value" id="segCon">—</div><div class="metric-sub">llamado/WA</div></div>
+    <div class="metric-card c4" style="cursor:pointer" onclick="filtrarSeg('Seguimiento')"><div class="metric-icon">🔔</div><div class="metric-label">Seguimiento</div><div class="metric-value" id="segCount">—</div><div class="metric-sub">activos</div></div>
+    <div class="metric-card c1" style="cursor:pointer" onclick="filtrarSeg('Mayor prioridad')"><div class="metric-icon">🚨</div><div class="metric-label">Alta Prioridad</div><div class="metric-value" id="segAlta">—</div><div class="metric-sub">urgentes</div></div>
+    <div class="metric-card c3" style="cursor:pointer" onclick="filtrarSeg('Sin contactar')"><div class="metric-icon">📞</div><div class="metric-label">Sin Contactar</div><div class="metric-value" id="segSin">—</div><div class="metric-sub">nunca</div></div>
+    <div class="metric-card c2" style="cursor:pointer" onclick="filtrarSeg('')"><div class="metric-icon">📋</div><div class="metric-label">Total pendientes</div><div class="metric-value" id="segCon">—</div><div class="metric-sub">en lista</div></div>
   </div>
   <div class="panel">
-    <div class="panel-header"><span class="panel-title">Pendientes</span>
-      <select class="filter-select" id="fseg" style="font-size:12px;padding:5px 9px"><option value="">Todos</option><option value="Seguimiento">Seguimiento</option><option value="Mayor prioridad">Mayor Prioridad</option><option value="Sin contactar">Sin Contactar</option></select>
+    <div class="panel-header">
+      <span class="panel-title">Pendientes</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="search-wrap" style="min-width:160px"><span class="search-icon">🔍</span><input id="qSeg" placeholder="Buscar…" oninput="renderSeguimiento()"></div>
+        <select class="filter-select" id="fseg" style="font-size:12px;padding:5px 9px">
+          <option value="">Todos</option>
+          <option value="Seguimiento">Seguimiento</option>
+          <option value="Mayor prioridad">Mayor Prioridad</option>
+          <option value="Sin contactar">Sin Contactar</option>
+          <option value="Llamado">Llamado</option>
+          <option value="WhatsApp">WhatsApp</option>
+        </select>
+        <select class="filter-select" id="fSegGrupo" style="font-size:12px;padding:5px 9px">
+          <option value="">Todos los grupos</option>
+          <option value="Critico">Crítico</option>
+          <option value="Medio">Medio</option>
+          <option value="Leve">Leve</option>
+        </select>
+      </div>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th></tr></thead>
+      <table><thead><tr><th>Cliente</th><th>Grupo</th><th>Estado</th><th>Próxima Acción</th><th>Notas</th><th>Acción rápida</th></tr></thead>
       <tbody id="tbSeg"></tbody></table>
       <div id="emptySeg" class="empty" style="display:none"><div class="empty-icon">✅</div><p>¡Sin pendientes!</p></div>
     </div>
@@ -1058,6 +1077,8 @@ async function loadDesarrolladores() { const d = await api('GET','/api/usuarios/
 // ═══════════════════════════════════════════════════
 // RENDER TABLE HELPER
 // ═══════════════════════════════════════════════════
+const GRUPOS = ['Critico','Medio','Leve','Confirmado'];
+
 function renderTable(tbId, emptyId, cntId, q, grupo, estado) {
   const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
   const filtered = clientes.map((x,i) => ({...x,_idx:i})).filter(x =>
@@ -1076,15 +1097,22 @@ function renderTable(tbId, emptyId, cntId, q, grupo, estado) {
       const row = document.createElement('tr');
       if (canEdit) {
         row.innerHTML = `
-          <td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
-          <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+          <td style="min-width:160px">
+            <input class="cell-input" data-idx="${i}" data-field="nombre" value="${escAttr(x.nombre||'')}" placeholder="Nombre del cliente" style="font-weight:600">
+            <div class="client-id">#${x.id}</div>
+          </td>
+          <td>
+            <select class="cell-select" data-idx="${i}" data-field="grupo" style="font-size:12px">
+              ${GRUPOS.map(g=>`<option${g===x.grupo?' selected':''}>${g}</option>`).join('')}
+            </select>
+          </td>
           <td><div class="estado-wrap"><span class="dot" style="background:${ESTADO_COLORS[x.estado]||'#64748b'}"></span>
             <select class="cell-select" data-idx="${i}" data-field="estado">
               ${ESTADOS.map(e=>`<option${e===x.estado?' selected':''}>${e}</option>`).join('')}
             </select></div></td>
           <td><input class="cell-input" data-idx="${i}" data-field="proximaAccion" value="${escAttr(x.proximaAccion||'')}" placeholder="—"></td>
           <td><input class="cell-input" data-idx="${i}" data-field="notas" value="${escAttr(x.notas||'')}" placeholder="—"></td>
-          <td><button class="btn btn-danger btn-sm" data-del="${i}">✕</button></td>`;
+          <td><button class="btn btn-danger btn-sm" data-del="${i}" title="Eliminar">✕</button></td>`;
       } else {
         row.innerHTML = `
           <td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
@@ -1132,11 +1160,28 @@ function graf() {
 ['tb','tb2'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('change', e => {
-    const t=e.target,idx=t.dataset.idx,field=t.dataset.field;
-    if (idx!==undefined&&field) { clientes[idx][field]=t.value; markUnsaved(); if(field==='estado'){const d=t.closest('.estado-wrap')?.querySelector('.dot');if(d)d.style.background=ESTADO_COLORS[t.value]||'#64748b';} }
+    const t=e.target,idx=parseInt(t.dataset.idx),field=t.dataset.field;
+    if (!isNaN(idx)&&field) {
+      clientes[idx][field]=t.value;
+      markUnsaved();
+      if(field==='estado'){const d=t.closest('.estado-wrap')?.querySelector('.dot');if(d)d.style.background=ESTADO_COLORS[t.value]||'#64748b';}
+    }
   });
-  el.addEventListener('input', e => { const t=e.target; if(t.tagName==='INPUT'&&t.dataset.idx!==undefined&&t.dataset.field) { clientes[t.dataset.idx][t.dataset.field]=t.value; markUnsaved(); } });
-  el.addEventListener('click', e => { const b=e.target.closest('[data-del]'); if(b){clientes.splice(parseInt(b.dataset.del),1);markUnsaved();render();renderClientes();} });
+  el.addEventListener('input', e => {
+    const t=e.target;
+    if(t.tagName==='INPUT'&&t.dataset.idx!==undefined&&t.dataset.field) {
+      clientes[parseInt(t.dataset.idx)][t.dataset.field]=t.value;
+      markUnsaved();
+    }
+  });
+  el.addEventListener('click', e => {
+    const b=e.target.closest('[data-del]');
+    if(b){
+      if(!confirm('¿Eliminar este cliente?'))return;
+      clientes.splice(parseInt(b.dataset.del),1);
+      markUnsaved();render();renderClientes();
+    }
+  });
 });
 
 // ═══════════════════════════════════════════════════
@@ -1174,11 +1219,35 @@ function clearUnsaved() {
   });
 }
 
+function navTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('active');
+  document.getElementById('page-' + page).classList.add('active');
+  if (page === 'clientes')    renderClientes();
+  if (page === 'seguimiento') renderSeguimiento();
+  if (page === 'reportes')    renderReportes();
+}
+
+function irANuevoCliente() {
+  navTo('clientes');
+  setTimeout(() => nuevo(), 50);
+}
+
 function nuevo() {
-  clientes.push({id:Date.now(),nombre:'Nuevo Cliente',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
+  clientes.push({id:Date.now(),nombre:'',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
   markUnsaved();
-  render();
-  setTimeout(()=>{const rows=document.getElementById('tb').querySelectorAll('tr');if(rows.length)rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'center'});},50);
+  renderClientes();
+  setTimeout(()=>{
+    const rows=document.getElementById('tb2').querySelectorAll('tr');
+    if(rows.length){
+      const lastRow=rows[rows.length-1];
+      lastRow.scrollIntoView({behavior:'smooth',block:'center'});
+      const nameInput=lastRow.querySelector('input[data-field="nombre"]');
+      if(nameInput)nameInput.focus();
+    }
+  },50);
 }
 async function guardar() {
   await api('POST','/api/clientes',clientes);
@@ -1189,31 +1258,132 @@ async function guardar() {
 // ═══════════════════════════════════════════════════
 // SEGUIMIENTO
 // ═══════════════════════════════════════════════════
+const SEG_ESTADOS = ['Seguimiento','Mayor prioridad','Sin contactar','Llamado','WhatsApp'];
+
+function filtrarSeg(estado) {
+  document.getElementById('fseg').value = estado;
+  renderSeguimiento();
+}
+
 function renderSeguimiento() {
-  const fseg = document.getElementById('fseg').value;
-  const seg  = clientes.map((x,i)=>({...x,_idx:i})).filter(x =>
-    !fseg ? ['Seguimiento','Mayor prioridad','Sin contactar','Llamado'].includes(x.estado) : x.estado===fseg
+  const fseg  = document.getElementById('fseg').value;
+  const fGrp  = document.getElementById('fSegGrupo').value;
+  const q     = (document.getElementById('qSeg')?.value || '').toLowerCase();
+  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+
+  const seg = clientes.map((x,i)=>({...x,_idx:i})).filter(x =>
+    SEG_ESTADOS.includes(x.estado) &&
+    (!fseg  || x.estado === fseg) &&
+    (!fGrp  || x.grupo  === fGrp) &&
+    (!q     || x.nombre.toLowerCase().includes(q) || (x.notas||'').toLowerCase().includes(q))
   );
+
+  // Stats (siempre sobre todos los clientes, sin filtros)
+  const allSeg = clientes.filter(x => SEG_ESTADOS.includes(x.estado));
   document.getElementById('segCount').textContent = clientes.filter(x=>x.estado==='Seguimiento').length;
   document.getElementById('segAlta').textContent  = clientes.filter(x=>x.estado==='Mayor prioridad').length;
   document.getElementById('segSin').textContent   = clientes.filter(x=>x.estado==='Sin contactar').length;
-  document.getElementById('segCon').textContent   = clientes.filter(x=>['Llamado','WhatsApp'].includes(x.estado)).length;
+  document.getElementById('segCon').textContent   = allSeg.length;
+
   const tb=document.getElementById('tbSeg'), empty=document.getElementById('emptySeg');
   tb.innerHTML='';
   if (!seg.length) { empty.style.display='block'; return; }
   empty.style.display='none';
+
+  // Color por urgencia
+  const urgColor = { 'Mayor prioridad':'var(--red)', 'Seguimiento':'var(--yellow)', 'Sin contactar':'var(--muted)', 'Llamado':'var(--blue)', 'WhatsApp':'var(--green)' };
+
   seg.forEach(x=>{
-    const pc=x.estado==='Mayor prioridad'?'prioridad-alta':x.estado==='Seguimiento'?'prioridad-media':'prioridad-normal';
+    const i = x._idx;
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const vence = x.proximaAccion ? new Date(x.proximaAccion) : null;
+    const vencida = vence && vence < hoy;
+    const hoyMismo = vence && vence.toDateString() === hoy.toDateString();
     const row=document.createElement('tr');
-    row.innerHTML=`<td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
-      <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
-      <td><span class="${pc}">${escHtml(x.estado)}</span></td>
-      <td>${x.proximaAccion?`<span style="background:rgba(99,102,241,.15);color:var(--accent2);padding:3px 9px;border-radius:6px;font-size:12px">${escHtml(x.proximaAccion)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-      <td style="color:var(--muted);font-size:12px">${escHtml(x.notas||'—')}</td>`;
+    if (vencida) row.style.background='rgba(239,68,68,.05)';
+    else if (hoyMismo) row.style.background='rgba(245,158,11,.05)';
+
+    const fechaCell = x.proximaAccion
+      ? `<span style="background:${vencida?'rgba(239,68,68,.15)':hoyMismo?'rgba(245,158,11,.15)':'rgba(99,102,241,.15)'};color:${vencida?'var(--red)':hoyMismo?'var(--yellow)':'var(--accent2)'};padding:3px 9px;border-radius:6px;font-size:12px" title="${vencida?'¡Vencida!':hoyMismo?'¡Hoy!':''}">${escHtml(x.proximaAccion)}${vencida?' ⚠️':hoyMismo?' 🔔':''}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+
+    if (canEdit) {
+      row.innerHTML=`
+        <td style="min-width:150px">
+          <div class="client-name">${escHtml(x.nombre)}</div>
+          <div class="client-id">#${x.id}</div>
+        </td>
+        <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+        <td>
+          <div class="estado-wrap">
+            <span class="dot" style="background:${urgColor[x.estado]||'#64748b'}"></span>
+            <select class="cell-select seg-estado-sel" data-idx="${i}" data-field="estado" style="font-size:12px">
+              ${ESTADOS.map(e=>`<option${e===x.estado?' selected':''}>${e}</option>`).join('')}
+            </select>
+          </div>
+        </td>
+        <td>
+          <input class="cell-input" data-idx="${i}" data-field="proximaAccion" value="${escAttr(x.proximaAccion||'')}" placeholder="AAAA-MM-DD" style="font-size:12px;max-width:120px" type="date">
+        </td>
+        <td style="max-width:200px">
+          <input class="cell-input" data-idx="${i}" data-field="notas" value="${escAttr(x.notas||'')}" placeholder="—" style="font-size:12px">
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${x.estado!=='Cliente'?`<button class="btn btn-success btn-sm seg-quick" data-idx="${i}" data-estado="Cliente" title="Marcar como Cliente" style="font-size:11px;padding:3px 7px">✅</button>`:''}
+            ${x.estado!=='Seguimiento'?`<button class="btn btn-warning btn-sm seg-quick" data-idx="${i}" data-estado="Seguimiento" title="Marcar en seguimiento" style="font-size:11px;padding:3px 7px">🔔</button>`:''}
+            ${x.estado!=='Mayor prioridad'?`<button class="btn btn-danger btn-sm seg-quick" data-idx="${i}" data-estado="Mayor prioridad" title="Alta prioridad" style="font-size:11px;padding:3px 7px">🚨</button>`:''}
+          </div>
+        </td>`;
+    } else {
+      row.innerHTML=`
+        <td><div class="client-name">${escHtml(x.nombre)}</div><div class="client-id">#${x.id}</div></td>
+        <td><span class="badge ${BADGE_CLASS[x.grupo]||'badge-leve'}">${escHtml(x.grupo)}</span></td>
+        <td><div class="estado-wrap"><span class="dot" style="background:${urgColor[x.estado]||'#64748b'}"></span><span style="color:${urgColor[x.estado]||'var(--text)'};font-weight:600">${escHtml(x.estado)}</span></div></td>
+        <td>${fechaCell}</td>
+        <td style="color:var(--muted);font-size:12px">${escHtml(x.notas||'—')}</td>
+        <td></td>`;
+    }
     tb.appendChild(row);
   });
+
+  // Acciones rápidas desde seguimiento (botones seg-quick)
+  if (canEdit) {
+    document.getElementById('tbSeg').querySelectorAll('.seg-quick').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        clientes[idx].estado = btn.dataset.estado;
+        markUnsaved();
+        renderSeguimiento();
+        render();
+      });
+    });
+    // Edición inline en seguimiento también dispara markUnsaved
+    document.getElementById('tbSeg').querySelectorAll('.seg-estado-sel').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const idx = parseInt(sel.dataset.idx);
+        clientes[idx].estado = sel.value;
+        markUnsaved();
+        renderSeguimiento();
+        render();
+      });
+    });
+    document.getElementById('tbSeg').querySelectorAll('input[data-idx]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const idx = parseInt(inp.dataset.idx);
+        clientes[idx][inp.dataset.field] = inp.value;
+        markUnsaved();
+      });
+      inp.addEventListener('change', () => {
+        const idx = parseInt(inp.dataset.idx);
+        clientes[idx][inp.dataset.field] = inp.value;
+        markUnsaved();
+      });
+    });
+  }
 }
 document.getElementById('fseg').addEventListener('change', renderSeguimiento);
+document.getElementById('fSegGrupo').addEventListener('change', renderSeguimiento);
 
 // ═══════════════════════════════════════════════════
 // REPORTES

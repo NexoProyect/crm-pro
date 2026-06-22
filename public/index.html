@@ -1284,7 +1284,8 @@ function irANuevoCliente() {
 }
 
 function nuevo() {
-  clientes.push({id:Date.now(),nombre:'',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
+  const nextId = clientes.length ? Math.max(...clientes.map(c => typeof c.id === 'number' && c.id < 1e12 ? c.id : 0)) + 1 : 1;
+  clientes.push({id:nextId,nombre:'',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
   markUnsaved();
   renderClientes();
   setTimeout(()=>{
@@ -2183,8 +2184,9 @@ async function confirmarAgregarCRM() {
   const camp   = campanas.find(c => c.id === campId);
   const p      = camp?.prospectos.find(x => x.id === pid);
   if (!p) return;
+  const nextId = clientes.length ? Math.max(...clientes.map(c => typeof c.id === 'number' && c.id < 1e12 ? c.id : 0)) + 1 : 1;
   const nuevo = {
-    id: Date.now(),
+    id: nextId,
     nombre: p.nombre,
     grupo: document.getElementById('agregarGrupo').value,
     estado: document.getElementById('agregarEstado').value,

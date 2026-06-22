@@ -682,36 +682,25 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
 
         <!-- Fondo startup fijo -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px">
+          <span style="font-size:18px">🔒</span>
           <div>
-            <div style="font-size:13px;font-weight:700">Fondo Startup</div>
-            <div style="font-size:11px;color:var(--muted)">20% fijo no negociable — se descuenta antes de distribuir</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:18px;font-weight:800;color:var(--red)" id="hipFondoMonto">$0.00</div>
-            <div style="font-size:11px;color:var(--muted)">20%</div>
+            <div style="font-size:13px;font-weight:700">Fondo Startup — 20% fijo</div>
+            <div style="font-size:11px;color:var(--muted)">Se descuenta automáticamente antes de distribuir entre el equipo</div>
           </div>
         </div>
 
-        <!-- Input monto + guardar preset -->
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <div style="flex:1">
-            <label class="form-label">Ganancia total bruta</label>
-            <div style="display:flex;align-items:center">
-              <span style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-size:14px;color:var(--muted)">$</span>
-              <input class="form-input" id="hipMonto" type="number" min="0" step="0.01" placeholder="0.00"
-                style="border-radius:0 8px 8px 0;border-left:none" oninput="calcularHipotetico()">
-            </div>
-          </div>
-          <div style="text-align:right;padding-bottom:2px">
-            <div style="font-size:11px;color:var(--muted)">Distribuible (80%)</div>
-            <div style="font-size:16px;font-weight:800;color:var(--green)" id="hipNeto">$0.00</div>
+        <!-- Input monto -->
+        <div>
+          <label class="form-label">Ganancia total bruta</label>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="hipMonto" type="number" min="0" step="0.01" placeholder="0.00" style="flex:1">
+            <button class="btn btn-primary" onclick="calcularHipotetico()">Calcular</button>
+            <button class="btn btn-secondary" onclick="hipGuardarPreset()" title="Guardar preset">＋ Preset</button>
           </div>
         </div>
 
         <div id="hipResultado" style="display:none;flex-direction:column;gap:8px"></div>
-
-        <button class="btn btn-secondary btn-sm" style="align-self:flex-start" onclick="hipGuardarPreset()">＋ Guardar como preset</button>
       </div>
     </div>
   </div>
@@ -2190,17 +2179,12 @@ const HIP_STARTUP_PCT = 20;
 
 function calcularHipotetico() {
   const bruto = parseFloat(document.getElementById('hipMonto').value) || 0;
-  const fondo = bruto * HIP_STARTUP_PCT / 100;
-  const neto  = bruto - fondo;
-
-  const fondoEl = document.getElementById('hipFondoMonto');
-  const netoEl  = document.getElementById('hipNeto');
-  if (fondoEl) fondoEl.textContent = '$' + fondo.toLocaleString('en-US', {minimumFractionDigits:2});
-  if (netoEl)  netoEl.textContent  = '$' + neto.toLocaleString('en-US',  {minimumFractionDigits:2});
-
   const el = document.getElementById('hipResultado');
   if (!el) return;
   if (bruto <= 0) { el.style.display = 'none'; return; }
+
+  const fondo = bruto * HIP_STARTUP_PCT / 100;
+  const neto  = bruto - fondo;
 
   const inputs = document.querySelectorAll('#comPersonas .com-pct-input');
   const resultados = Array.from(inputs)
@@ -2209,21 +2193,35 @@ function calcularHipotetico() {
     .sort((a, b) => b.monto - a.monto);
 
   if (resultados.length === 0) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--muted)">Asigna porcentajes a las personas arriba primero.</div>';
-    el.style.display = 'flex';
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0">Asigna porcentajes a las personas arriba primero.</div>';
+    el.style.display = 'block';
     return;
   }
 
-  el.innerHTML = resultados.map(r => `
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:6px">
+      <div style="padding:10px 14px;background:var(--surface2);border-radius:8px">
+        <div style="font-size:11px;color:var(--muted)">Total bruto</div>
+        <div style="font-size:16px;font-weight:800">$${bruto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+      </div>
+      <div style="padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px">
+        <div style="font-size:11px;color:var(--muted)">Fondo Startup (20%)</div>
+        <div style="font-size:16px;font-weight:800;color:var(--red)">$${fondo.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+      </div>
+      <div style="padding:10px 14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px">
+        <div style="font-size:11px;color:var(--muted)">Distribuible (80%)</div>
+        <div style="font-size:16px;font-weight:800;color:var(--green)">$${neto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+      </div>
+    </div>
+    ${resultados.map(r => `
     <div class="com-result-row">
       <div>
         <div class="com-result-name">${escHtml(r.nombre)}</div>
         <div class="com-result-pct">${r.pct}% del distribuible</div>
       </div>
       <div class="com-result-amount">$${r.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
-    </div>`).join('');
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
+    </div>`).join('')}`;
+  el.style.display = 'block';
 }
 
 function hipCargarPresets() {

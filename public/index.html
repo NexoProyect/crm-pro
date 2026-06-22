@@ -284,6 +284,35 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .camp-import-box textarea:focus{border-color:var(--accent)}
 .camp-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
 
+/* TICKETS */
+.ticket-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;transition:border-color .2s;cursor:pointer}
+.ticket-card:hover{border-color:var(--accent)}
+.ticket-card.p-critica{border-left:3px solid var(--red)}
+.ticket-card.p-alta{border-left:3px solid var(--yellow)}
+.ticket-card.p-media{border-left:3px solid var(--blue)}
+.ticket-card.p-baja{border-left:3px solid var(--muted)}
+.ticket-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.ticket-titulo{font-size:14px;font-weight:700;line-height:1.4}
+.ticket-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.ticket-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px;white-space:pre-wrap;max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,black 50%,transparent 100%)}
+.ticket-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.t-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.t-abierto{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.t-en-progreso{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.t-resuelto{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.t-cerrado{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.tp-critica{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.tp-alta{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.tp-media{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.tp-baja{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.ticket-resp{background:var(--surface2);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.5}
+.ticket-resp-admin{background:rgba(99,102,241,.1);border-left:3px solid var(--accent)}
+.ticket-resp-meta{font-size:11px;color:var(--muted);margin-bottom:4px}
+.tickets-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px}
+.tickets-tab{flex:1;padding:8px;text-align:center;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+.tickets-tab.active{background:var(--accent);color:#fff}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;margin-left:4px;flex-shrink:0}
+
 @media(max-width:1100px){.content-row,.proj-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:18px 14px}.metrics{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -330,6 +359,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="nav-item" data-page="campanas" data-roles="admin,vendedor,soporte"><span class="nav-icon">🎯</span> Campañas</div>
   <div class="nav-item" data-page="seguimiento" data-roles="admin,vendedor,soporte"><span class="nav-icon">📋</span> Seguimiento</div>
   <div class="nav-item" data-page="reportes" data-roles="admin,vendedor"><span class="nav-icon">📈</span> Reportes</div>
+  <div class="nav-item" data-page="tickets"><span class="nav-icon">🎫</span> Tickets<span class="nav-badge" id="ticketBadge" style="display:none">0</span></div>
   <div class="nav-item" data-page="usuarios" data-roles="admin"><span class="nav-icon">👤</span> Usuarios</div>
   <div class="nav-item" data-page="configuracion" data-roles="admin"><span class="nav-icon">⚙️</span> Configuración</div>
   <div class="sidebar-footer">
@@ -496,6 +526,52 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="panel"><div class="panel-header"><span class="panel-title">Por Estado</span></div><div style="padding:20px;height:240px"><canvas id="chartPie"></canvas></div></div>
   </div>
   <div class="panel"><div class="panel-header"><span class="panel-title">Resumen por Estado</span></div><div class="panel-body"><table><thead><tr><th>Estado</th><th>Cantidad</th><th>% del Total</th></tr></thead><tbody id="tbEstados"></tbody></table></div></div>
+</div>
+
+<!-- ═══════════ TICKETS ═══════════ -->
+<div class="page" id="page-tickets">
+  <div class="header">
+    <div class="header-left"><h1>Tickets</h1><p>Reportes internos del equipo</p></div>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="abrirModalTicket()">＋ Nuevo Ticket</button>
+    </div>
+  </div>
+
+  <!-- Tabs admin vs mis tickets -->
+  <div class="tickets-tabs" id="ticketsTabs" style="display:none">
+    <div class="tickets-tab active" data-ttab="todos" onclick="switchTicketTab('todos')">Todos</div>
+    <div class="tickets-tab" data-ttab="abiertos" onclick="switchTicketTab('abiertos')">Abiertos</div>
+    <div class="tickets-tab" data-ttab="en-progreso" onclick="switchTicketTab('en-progreso')">En progreso</div>
+    <div class="tickets-tab" data-ttab="resueltos" onclick="switchTicketTab('resueltos')">Resueltos</div>
+    <div class="tickets-tab" data-ttab="cerrados" onclick="switchTicketTab('cerrados')">Cerrados</div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="toolbar" style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)">
+    <div class="search-wrap"><span class="search-icon">🔍</span><input id="qTicket" placeholder="Buscar ticket…" oninput="renderTickets()"></div>
+    <select class="filter-select" id="fTicketTipo" onchange="renderTickets()">
+      <option value="">Todos los tipos</option>
+      <option value="cliente">Cliente</option>
+      <option value="plataforma">Plataforma</option>
+      <option value="pago">Pago</option>
+      <option value="comunicacion">Comunicación</option>
+      <option value="general">General</option>
+    </select>
+    <select class="filter-select" id="fTicketPrioridad" onchange="renderTickets()">
+      <option value="">Todas las prioridades</option>
+      <option value="critica">🔴 Crítica</option>
+      <option value="alta">🟠 Alta</option>
+      <option value="media">🔵 Media</option>
+      <option value="baja">⚪ Baja</option>
+    </select>
+    <span class="count-badge" id="ticketCount"></span>
+  </div>
+
+  <div id="ticketList"></div>
+  <div id="emptyTickets" class="empty" style="display:none">
+    <div class="empty-icon">🎫</div>
+    <p>No hay tickets.<br>Crea uno para reportar un problema o solicitar algo al equipo.</p>
+  </div>
 </div>
 
 <!-- ═══════════ USUARIOS ═══════════ -->
@@ -882,6 +958,107 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- ════ MODAL NUEVO TICKET ════ -->
+<div class="modal-overlay" id="modalTicket">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo Ticket</span>
+      <span class="modal-close" onclick="cerrarModal('modalTicket')">×</span>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Título</label>
+        <input class="form-input" id="ticketTitulo" placeholder="Resumen breve del problema…">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" id="ticketTipo">
+            <option value="cliente">👤 Cliente</option>
+            <option value="plataforma">💻 Plataforma</option>
+            <option value="pago">💳 Pago</option>
+            <option value="comunicacion">💬 Comunicación</option>
+            <option value="general" selected>📋 General</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Prioridad</label>
+          <select class="form-select" id="ticketPrioridad">
+            <option value="baja">⚪ Baja</option>
+            <option value="media" selected>🔵 Media</option>
+            <option value="alta">🟠 Alta</option>
+            <option value="critica">🔴 Crítica</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Cliente relacionado (opcional)</label>
+        <input class="form-input" id="ticketClienteSearch" list="ticketClienteList" placeholder="Buscar cliente…" autocomplete="off" oninput="onTicketClienteSearch()">
+        <input type="hidden" id="ticketClienteId">
+        <datalist id="ticketClienteList"></datalist>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Descripción detallada</label>
+        <textarea class="form-input" id="ticketDesc" rows="5" placeholder="Describe el problema, qué pasó, qué esperabas, pasos para reproducirlo…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalTicket')">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearTicket()">🎫 Crear Ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL DETALLE TICKET ════ -->
+<div class="modal-overlay" id="modalTicketDetalle">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="tdTitulo">Ticket</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px" id="tdMeta"></div>
+      </div>
+      <span class="modal-close" onclick="cerrarModal('modalTicketDetalle')">×</span>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- Badges y acciones de estado (admin) -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap" id="tdBadges"></div>
+
+      <!-- Descripción -->
+      <div>
+        <div class="form-label" style="margin-bottom:6px">Descripción</div>
+        <div id="tdDesc" style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+      </div>
+
+      <!-- Cliente relacionado -->
+      <div id="tdClienteWrap" style="display:none">
+        <div class="form-label" style="margin-bottom:4px">Cliente relacionado</div>
+        <div id="tdCliente" style="font-size:13px;font-weight:600"></div>
+      </div>
+
+      <!-- Respuestas -->
+      <div>
+        <div class="form-label" style="margin-bottom:8px">Conversación <span id="tdRespCount" style="font-weight:400;color:var(--muted)"></span></div>
+        <div id="tdRespList" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Input respuesta -->
+      <div id="tdRespInputWrap">
+        <div class="form-label" style="margin-bottom:6px" id="tdRespLabel">Responder</div>
+        <textarea class="form-input" id="tdRespTexto" rows="3" placeholder="Escribe tu respuesta…" style="resize:vertical"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <div id="tdAdminAcciones" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="cerrarModal('modalTicketDetalle')">Cerrar</button>
+        <button class="btn btn-primary" id="tdBtnResponder" onclick="responderTicket()">Enviar respuesta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════ MODAL USUARIO ════ -->
 <div class="modal-overlay" id="modalUser">
   <div class="modal" style="max-width:460px">
@@ -1036,7 +1213,7 @@ async function iniciarApp() {
   applyRoleUI();
 
   // Load data
-  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos(), loadCampanas(), loadDesarrolladores()]);
+  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos(), loadCampanas(), loadDesarrolladores(), loadTickets()]);
   if (u.rol === 'admin') await loadUsuarios();
 
   render();
@@ -1090,6 +1267,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     if (pg === 'proyectos')   renderProyectos();
     if (pg === 'usuarios')    renderUsuarios();
     if (pg === 'campanas')    initCampanas();
+    if (pg === 'tickets')     { loadTickets().then(initTickets); }
   });
 });
 
@@ -1284,6 +1462,7 @@ function navTo(page) {
   if (page === 'clientes')    renderClientes();
   if (page === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
   if (page === 'reportes')    renderReportes();
+  if (page === 'tickets')     { loadTickets().then(initTickets); }
 }
 
 function irANuevoCliente() {
@@ -2350,6 +2529,264 @@ function initCampanas() {
   document.getElementById('btnEjemploCamp').style.display = isAdmin ? '' : 'none';
   document.getElementById('btnEliminarCamp').style.display = 'none';
   renderSelectorCampanas();
+}
+
+// ═══════════════════════════════════════════════════
+// TICKETS
+// ═══════════════════════════════════════════════════
+let tickets = [];
+let ticketTab = 'todos';
+let ticketDetalleId = null;
+
+const TICKET_TIPO_LABEL = { cliente:'👤 Cliente', plataforma:'💻 Plataforma', pago:'💳 Pago', comunicacion:'💬 Comunicación', general:'📋 General' };
+const TICKET_PRIOR_LABEL = { critica:'🔴 Crítica', alta:'🟠 Alta', media:'🔵 Media', baja:'⚪ Baja' };
+const TICKET_ESTADO_LABEL = { abierto:'Abierto', 'en-progreso':'En progreso', resuelto:'Resuelto', cerrado:'Cerrado' };
+
+async function loadTickets() {
+  const d = await api('GET', '/api/tickets');
+  if (d) tickets = d;
+  actualizarBadgeTickets();
+}
+
+function actualizarBadgeTickets() {
+  const isAdmin = SESSION.user?.rol === 'admin';
+  // Badge: tickets abiertos que me conciernen
+  const pendientes = tickets.filter(t =>
+    (isAdmin ? t.estado === 'abierto' || t.estado === 'en-progreso' : t.autorId === SESSION.user.id && t.estado !== 'cerrado')
+  ).length;
+  const badge = document.getElementById('ticketBadge');
+  if (badge) {
+    badge.textContent = pendientes;
+    badge.style.display = pendientes > 0 ? '' : 'none';
+  }
+}
+
+function switchTicketTab(tab) {
+  ticketTab = tab;
+  document.querySelectorAll('.tickets-tab').forEach(t => t.classList.toggle('active', t.dataset.ttab === tab));
+  renderTickets();
+}
+
+function renderTickets() {
+  const isAdmin = SESSION.user.rol === 'admin';
+  const q = document.getElementById('qTicket').value.toLowerCase();
+  const fTipo = document.getElementById('fTicketTipo').value;
+  const fPrior = document.getElementById('fTicketPrioridad').value;
+
+  let lista = tickets.slice().sort((a,b) => {
+    // Crítica primero, luego más recientes
+    const pOrd = {critica:0,alta:1,media:2,baja:3};
+    if (a.estado!=='cerrado' && b.estado==='cerrado') return -1;
+    if (a.estado==='cerrado' && b.estado!=='cerrado') return 1;
+    if (pOrd[a.prioridad] !== pOrd[b.prioridad]) return pOrd[a.prioridad] - pOrd[b.prioridad];
+    return new Date(b.creadoEn) - new Date(a.creadoEn);
+  });
+
+  // Tab filter (admin only has tabs)
+  if (isAdmin && ticketTab !== 'todos') lista = lista.filter(t => t.estado === ticketTab);
+
+  // Search & filters
+  lista = lista.filter(t =>
+    (!q || t.titulo.toLowerCase().includes(q) || t.descripcion.toLowerCase().includes(q) || (t.autorNombre||'').toLowerCase().includes(q)) &&
+    (!fTipo  || t.tipo === fTipo) &&
+    (!fPrior || t.prioridad === fPrior)
+  );
+
+  document.getElementById('ticketCount').textContent = `${lista.length} ticket${lista.length!==1?'s':''}`;
+  const container = document.getElementById('ticketList');
+  const empty = document.getElementById('emptyTickets');
+  container.innerHTML = '';
+
+  if (!lista.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  lista.forEach(t => {
+    const div = document.createElement('div');
+    div.className = `ticket-card p-${t.prioridad}`;
+    div.onclick = () => abrirDetalleTicket(t.id);
+
+    const tieneRespuestas = (t.respuestas||[]).length;
+    const sinLeer = isAdmin && t.estado === 'abierto' && tieneRespuestas === 0;
+
+    div.innerHTML = `
+      <div class="ticket-header">
+        <div style="flex:1">
+          <div class="ticket-titulo">${escHtml(t.titulo)}${sinLeer ? '<span class="notif-dot" title="Sin respuesta"></span>' : ''}</div>
+          <div class="ticket-meta">
+            <span>Por ${escHtml(t.autorNombre)}</span>
+            <span>${fmtDate(t.creadoEn,true)}</span>
+            ${t.clienteNombre ? `<span>👤 ${escHtml(t.clienteNombre)}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
+          <span class="t-badge t-${t.estado.replace(' ','-')}">${TICKET_ESTADO_LABEL[t.estado]||t.estado}</span>
+          <span class="t-badge tp-${t.prioridad}">${TICKET_PRIOR_LABEL[t.prioridad]||t.prioridad}</span>
+        </div>
+      </div>
+      <div class="ticket-desc">${escHtml(t.descripcion)}</div>
+      <div class="ticket-footer">
+        <span class="badge badge-leve" style="font-size:11px">${TICKET_TIPO_LABEL[t.tipo]||t.tipo}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">💬 ${tieneRespuestas} respuesta${tieneRespuestas!==1?'s':''}</span>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function abrirModalTicket() {
+  document.getElementById('ticketTitulo').value = '';
+  document.getElementById('ticketDesc').value = '';
+  document.getElementById('ticketTipo').value = 'general';
+  document.getElementById('ticketPrioridad').value = 'media';
+  document.getElementById('ticketClienteSearch').value = '';
+  document.getElementById('ticketClienteId').value = '';
+  poblarClienteDatalist('ticketClienteList');
+  document.getElementById('modalTicket').classList.add('open');
+  setTimeout(() => document.getElementById('ticketTitulo').focus(), 100);
+}
+
+function onTicketClienteSearch() {
+  const val = document.getElementById('ticketClienteSearch').value;
+  const match = clientes.find(c => c.nombre === val);
+  document.getElementById('ticketClienteId').value = match ? match.id : '';
+}
+
+async function crearTicket() {
+  const titulo = document.getElementById('ticketTitulo').value.trim();
+  const descripcion = document.getElementById('ticketDesc').value.trim();
+  if (!titulo) { showToast('⚠️ El título es obligatorio'); return; }
+  if (!descripcion) { showToast('⚠️ La descripción es obligatoria'); return; }
+  const clienteId = parseInt(document.getElementById('ticketClienteId').value) || null;
+  const clienteNombre = document.getElementById('ticketClienteSearch').value.trim() || null;
+  const payload = {
+    titulo, descripcion,
+    tipo: document.getElementById('ticketTipo').value,
+    prioridad: document.getElementById('ticketPrioridad').value,
+    clienteId: clienteId || null,
+    clienteNombre: clienteNombre || null,
+  };
+  const res = await api('POST', '/api/tickets', payload);
+  if (!res || res.error) { showToast('⚠️ Error al crear ticket'); return; }
+  tickets.push(res);
+  cerrarModal('modalTicket');
+  actualizarBadgeTickets();
+  renderTickets();
+  showToast('🎫 Ticket creado');
+  // Abrir detalle inmediatamente
+  abrirDetalleTicket(res.id);
+}
+
+function abrirDetalleTicket(id) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  ticketDetalleId = id;
+  const isAdmin = SESSION.user.rol === 'admin';
+  const esMio = t.autorId === SESSION.user.id;
+
+  document.getElementById('tdTitulo').textContent = t.titulo;
+  document.getElementById('tdMeta').textContent =
+    `${TICKET_TIPO_LABEL[t.tipo]||t.tipo} · Creado por ${t.autorNombre} · ${fmtDate(t.creadoEn,true)}`;
+
+  // Badges
+  document.getElementById('tdBadges').innerHTML = `
+    <span class="t-badge t-${t.estado}">${TICKET_ESTADO_LABEL[t.estado]||t.estado}</span>
+    <span class="t-badge tp-${t.prioridad}">${TICKET_PRIOR_LABEL[t.prioridad]||t.prioridad}</span>
+    ${t.actualizadoEn !== t.creadoEn ? `<span style="font-size:11px;color:var(--muted)">Actualizado ${fmtDate(t.actualizadoEn,true)}</span>` : ''}`;
+
+  // Descripción
+  document.getElementById('tdDesc').textContent = t.descripcion;
+
+  // Cliente
+  const tdCli = document.getElementById('tdClienteWrap');
+  if (t.clienteNombre) {
+    tdCli.style.display = '';
+    document.getElementById('tdCliente').textContent = t.clienteNombre;
+  } else { tdCli.style.display = 'none'; }
+
+  // Respuestas
+  const resps = t.respuestas || [];
+  document.getElementById('tdRespCount').textContent = resps.length ? `(${resps.length})` : '';
+  const respList = document.getElementById('tdRespList');
+  respList.innerHTML = resps.length
+    ? resps.map(r => `
+        <div class="ticket-resp ${r.autorRol==='admin'?'ticket-resp-admin':''}">
+          <div class="ticket-resp-meta">${escHtml(r.autorNombre)} · ${ROL_LABELS[r.autorRol]||r.autorRol} · ${fmtDate(r.fecha,true)}</div>
+          <div style="white-space:pre-wrap">${escHtml(r.texto)}</div>
+        </div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Sin respuestas aún.</div>';
+  respList.scrollTop = respList.scrollHeight;
+
+  // Input respuesta — ocultar si cerrado y no admin
+  const cerrado = t.estado === 'cerrado';
+  const wrap = document.getElementById('tdRespInputWrap');
+  const btnResp = document.getElementById('tdBtnResponder');
+  if (cerrado && !isAdmin) {
+    wrap.style.display = 'none';
+    btnResp.style.display = 'none';
+  } else {
+    wrap.style.display = '';
+    btnResp.style.display = '';
+    document.getElementById('tdRespLabel').textContent = isAdmin ? 'Responder al equipo' : 'Responder / añadir info';
+    document.getElementById('tdRespTexto').value = '';
+  }
+
+  // Acciones admin
+  const adminDiv = document.getElementById('tdAdminAcciones');
+  if (isAdmin) {
+    const estadoOpts = [
+      ['abierto','🔵 Abrir'],['en-progreso','🟡 En progreso'],['resuelto','✅ Resolver'],['cerrado','🔒 Cerrar']
+    ].filter(([v]) => v !== t.estado);
+    adminDiv.innerHTML = estadoOpts.map(([v,l]) =>
+      `<button class="btn btn-secondary btn-sm" onclick="cambiarEstadoTicket(${t.id},'${v}')">${l}</button>`
+    ).join('') +
+    `<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑</button>`;
+  } else { adminDiv.innerHTML = ''; }
+
+  document.getElementById('modalTicketDetalle').classList.add('open');
+}
+
+async function responderTicket() {
+  const texto = document.getElementById('tdRespTexto').value.trim();
+  if (!texto || !ticketDetalleId) return;
+  const btn = document.getElementById('tdBtnResponder');
+  btn.disabled = true;
+  const resp = await api('POST', `/api/tickets/${ticketDetalleId}/respuesta`, { texto });
+  btn.disabled = false;
+  if (!resp || resp.error) { showToast('⚠️ Error al enviar'); return; }
+  const idx = tickets.findIndex(t => t.id === ticketDetalleId);
+  if (idx >= 0) {
+    if (!tickets[idx].respuestas) tickets[idx].respuestas = [];
+    tickets[idx].respuestas.push(resp);
+    tickets[idx].actualizadoEn = resp.fecha;
+  }
+  actualizarBadgeTickets();
+  renderTickets();
+  abrirDetalleTicket(ticketDetalleId); // refresh modal
+}
+
+async function cambiarEstadoTicket(id, estado) {
+  await api('PUT', `/api/tickets/${id}`, { estado });
+  const idx = tickets.findIndex(t => t.id === id);
+  if (idx >= 0) { tickets[idx].estado = estado; tickets[idx].actualizadoEn = new Date().toISOString(); }
+  actualizarBadgeTickets();
+  renderTickets();
+  abrirDetalleTicket(id);
+  showToast(`✅ Ticket marcado como ${TICKET_ESTADO_LABEL[estado]||estado}`);
+}
+
+async function eliminarTicket(id) {
+  if (!confirm('¿Eliminar este ticket permanentemente?')) return;
+  await api('DELETE', `/api/tickets/${id}`);
+  tickets = tickets.filter(t => t.id !== id);
+  cerrarModal('modalTicketDetalle');
+  actualizarBadgeTickets();
+  renderTickets();
+  showToast('🗑 Ticket eliminado');
+}
+
+function initTickets() {
+  const isAdmin = SESSION.user.rol === 'admin';
+  document.getElementById('ticketsTabs').style.display = isAdmin ? '' : 'none';
+  renderTickets();
 }
 
 // ═══════════════════════════════════════════════════

@@ -303,6 +303,85 @@ app.delete('/api/campanas/:id', auth(['admin']), async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── TICKETS ───────────────────────────────────────────────────────────────────
+app.get('/api/tickets', auth(), async (req, res) => {
+  const tickets = await read('tickets');
+  // No-admin only sees own tickets; admin sees all
+  if (req.user.rol === 'admin') return res.json(tickets);
+  res.json(tickets.filter(t => t.autorId === req.user.id));
+});
+
+app.post('/api/tickets', auth(), async (req, res) => {
+  const tickets = await read('tickets');
+  const { titulo, descripcion, tipo, prioridad, clienteId, clienteNombre } = req.body;
+  if (!titulo || !descripcion) return res.status(400).json({ error: 'Título y descripción requeridos' });
+  const nuevo = {
+    id: Date.now(),
+    titulo, descripcion,
+    tipo: tipo || 'general',
+    prioridad: prioridad || 'media',
+    estado: 'abierto',
+    clienteId: clienteId || null,
+    clienteNombre: clienteNombre || null,
+    autorId: req.user.id,
+    autorNombre: req.user.nombre,
+    autorRol: req.user.rol,
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString(),
+    respuestas: [],
+  };
+  tickets.push(nuevo);
+  await write('tickets', tickets);
+  res.json(nuevo);
+});
+
+app.put('/api/tickets/:id', auth(), async (req, res) => {
+  const tickets = await read('tickets');
+  const idx = tickets.findIndex(t => t.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+  const t = tickets[idx];
+  // Only admin or ticket author can update
+  if (req.user.rol !== 'admin' && t.autorId !== req.user.id)
+    return res.status(403).json({ error: 'Sin permiso' });
+  const { estado, prioridad, titulo, descripcion } = req.body;
+  if (estado)      t.estado = estado;
+  if (prioridad)   t.prioridad = prioridad;
+  if (titulo)      t.titulo = titulo;
+  if (descripcion) t.descripcion = descripcion;
+  t.actualizadoEn = new Date().toISOString();
+  await write('tickets', tickets);
+  res.json({ ok: true });
+});
+
+app.post('/api/tickets/:id/respuesta', auth(), async (req, res) => {
+  const tickets = await read('tickets');
+  const idx = tickets.findIndex(t => t.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+  const { texto } = req.body;
+  if (!texto) return res.status(400).json({ error: 'Texto requerido' });
+  const resp = {
+    id: Date.now(),
+    texto,
+    autorId: req.user.id,
+    autorNombre: req.user.nombre,
+    autorRol: req.user.rol,
+    fecha: new Date().toISOString(),
+  };
+  tickets[idx].respuestas.push(resp);
+  tickets[idx].actualizadoEn = new Date().toISOString();
+  // If non-admin replies to closed ticket, reopen it
+  if (req.user.rol !== 'admin' && tickets[idx].estado === 'cerrado') {
+    tickets[idx].estado = 'abierto';
+  }
+  await write('tickets', tickets);
+  res.json(resp);
+});
+
+app.delete('/api/tickets/:id', auth(['admin']), async (req, res) => {
+  await write('tickets', (await read('tickets')).filter(t => t.id !== parseInt(req.params.id)));
+  res.json({ ok: true });
+});
+
 // ── Static ────────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 

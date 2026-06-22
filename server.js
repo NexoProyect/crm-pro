@@ -382,6 +382,46 @@ app.delete('/api/tickets/:id', auth(['admin']), async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── EVENTOS (Calendario) ──────────────────────────────────────────────────────
+app.get('/api/eventos', auth(), async (req, res) => {
+  res.json(await read('eventos'));
+});
+
+app.post('/api/eventos', auth(['admin','vendedor']), async (req, res) => {
+  const eventos = await read('eventos');
+  const { titulo, fecha, hora, tipo, clienteId, descripcion } = req.body;
+  if (!titulo || !fecha) return res.status(400).json({ error: 'titulo y fecha requeridos' });
+  const nuevo = {
+    _id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    titulo, fecha,
+    hora: hora || null,
+    tipo: tipo || 'reunion',
+    clienteId: clienteId || null,
+    descripcion: descripcion || null,
+    autorId: req.user.id,
+    autorNombre: req.user.nombre,
+    creado: new Date().toISOString(),
+  };
+  eventos.push(nuevo);
+  await write('eventos', eventos);
+  res.json(nuevo);
+});
+
+app.put('/api/eventos/:id', auth(['admin','vendedor']), async (req, res) => {
+  const eventos = await read('eventos');
+  const idx = eventos.findIndex(e => e._id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'no encontrado' });
+  const { titulo, fecha, hora, tipo, clienteId, descripcion } = req.body;
+  eventos[idx] = { ...eventos[idx], titulo, fecha, hora: hora||null, tipo: tipo||'reunion', clienteId: clienteId||null, descripcion: descripcion||null };
+  await write('eventos', eventos);
+  res.json(eventos[idx]);
+});
+
+app.delete('/api/eventos/:id', auth(['admin','vendedor']), async (req, res) => {
+  await write('eventos', (await read('eventos')).filter(e => e._id !== req.params.id));
+  res.json({ ok: true });
+});
+
 // ── Static ────────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 

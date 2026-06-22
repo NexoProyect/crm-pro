@@ -313,6 +313,56 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tickets-tab.active{background:var(--accent);color:#fff}
 .notif-dot{width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;margin-left:4px;flex-shrink:0}
 
+/* USUARIOS REDISEÑADO */
+.user-table{width:100%;border-collapse:collapse}
+.user-table thead th{padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap;background:rgba(255,255,255,.02)}
+.user-table tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+.user-table tbody tr:last-child{border-bottom:none}
+.user-table tbody tr:hover{background:rgba(255,255,255,.03)}
+.user-table td{padding:12px 14px;font-size:13px;vertical-align:middle}
+.perm-table{width:100%;border-collapse:collapse;font-size:12px}
+.perm-table th{padding:9px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.perm-table th:first-child{text-align:left}
+.perm-table td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:center}
+.perm-table td:first-child{text-align:left;color:var(--muted)}
+.perm-table tr:last-child td{border-bottom:none}
+.perm-table tr:hover td{background:rgba(255,255,255,.02)}
+.perm-yes{color:var(--green);font-size:14px}
+.perm-no{color:var(--border);font-size:14px}
+
+/* CALENDARIO */
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.cal-mes-titulo{font-size:18px;font-weight:800;letter-spacing:-.3px;text-transform:capitalize;flex:1;text-align:center}
+.cal-nav-title{font-size:20px;font-weight:800;letter-spacing:-.3px;text-transform:capitalize}
+.cal-nav-btns{display:flex;gap:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:8px 0 10px}
+.cal-day{min-height:90px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;display:flex;flex-direction:column;gap:3px}
+.cal-day:hover{border-color:var(--accent);background:rgba(99,102,241,.04)}
+.cal-day.today{border-color:var(--accent);background:rgba(99,102,241,.08)}
+.cal-day.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.cal-day.other-month{opacity:.35}
+.cal-day.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.3)}
+.cal-day.has-events{border-color:rgba(99,102,241,.4)}
+.cal-day-num{font-size:13px;font-weight:700;width:24px;height:24px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex-shrink:0}
+.cal-event-chip{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.cal-event-chip.tipo-reunion{background:rgba(99,102,241,.2);color:var(--accent2)}
+.cal-event-chip.tipo-llamada{background:rgba(16,185,129,.2);color:#6ee7b7}
+.cal-event-chip.tipo-entrega{background:rgba(245,158,11,.2);color:#fcd34d}
+.cal-event-chip.tipo-demo{background:rgba(168,85,247,.2);color:#d8b4fe}
+.cal-event-chip.tipo-interno{background:rgba(59,130,246,.2);color:#93c5fd}
+.cal-event-chip.tipo-externo{background:rgba(239,68,68,.2);color:#fca5a5}
+.cal-more{font-size:10px;color:var(--muted);padding:1px 4px}
+.evento-card{background:var(--surface2);border-radius:10px;padding:14px 16px;border-left:3px solid var(--accent);margin-bottom:10px}
+.evento-card.tipo-reunion{border-left-color:var(--accent)}
+.evento-card.tipo-llamada{border-left-color:var(--green)}
+.evento-card.tipo-entrega{border-left-color:var(--yellow)}
+.evento-card.tipo-demo{border-left-color:var(--purple)}
+.evento-card.tipo-interno{border-left-color:var(--blue)}
+.evento-card.tipo-externo{border-left-color:var(--red)}
+.evento-titulo{font-size:14px;font-weight:700;margin-bottom:4px}
+.evento-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+
 @media(max-width:1100px){.content-row,.proj-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:18px 14px}.metrics{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -360,6 +410,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="nav-item" data-page="seguimiento" data-roles="admin,vendedor,soporte"><span class="nav-icon">📋</span> Seguimiento</div>
   <div class="nav-item" data-page="reportes" data-roles="admin,vendedor"><span class="nav-icon">📈</span> Reportes</div>
   <div class="nav-item" data-page="tickets"><span class="nav-icon">🎫</span> Tickets<span class="nav-badge" id="ticketBadge" style="display:none">0</span></div>
+  <div class="nav-item" data-page="calendario"><span class="nav-icon">📅</span> Calendario</div>
   <div class="nav-item" data-page="usuarios" data-roles="admin"><span class="nav-icon">👤</span> Usuarios</div>
   <div class="nav-item" data-page="configuracion" data-roles="admin"><span class="nav-icon">⚙️</span> Configuración</div>
   <div class="sidebar-footer">
@@ -574,31 +625,152 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- ═══════════ CALENDARIO ═══════════ -->
+<div class="page" id="page-calendario">
+  <div class="header">
+    <div class="header-left"><h1>Calendario</h1><p>Eventos y reuniones del equipo</p></div>
+    <div class="header-actions">
+      <button class="btn btn-primary" id="btnNuevoEvento" onclick="abrirModalEvento()" style="display:none">＋ Nuevo Evento</button>
+    </div>
+  </div>
+
+  <!-- Navegación del mes -->
+  <div class="cal-nav">
+    <button class="btn btn-secondary btn-sm" onclick="calMes(-1)">← Anterior</button>
+    <span class="cal-mes-titulo" id="calMesTitulo">Junio 2026</span>
+    <button class="btn btn-secondary btn-sm" onclick="calMes(1)">Siguiente →</button>
+    <button class="btn btn-secondary btn-sm" onclick="calHoy()">Hoy</button>
+  </div>
+
+  <!-- Grid del calendario -->
+  <div class="cal-grid" id="calGrid"></div>
+
+  <!-- Panel lateral: eventos del día seleccionado -->
+  <div id="calDayPanel" style="display:none;margin-top:16px">
+    <div class="panel">
+      <div class="panel-header" style="justify-content:space-between">
+        <span class="panel-title" id="calDayTitle">Lunes 15</span>
+        <button class="btn btn-secondary btn-sm" id="btnNuevoEventoDia" onclick="abrirModalEvento(null,calDiaSeleccionado)" style="display:none">＋ Agregar evento</button>
+      </div>
+      <div id="calDayEvents" style="padding:12px 0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal evento -->
+<div class="modal" id="modalEvento">
+  <div class="modal-content" style="max-width:500px">
+    <div class="modal-header"><span class="modal-title" id="modalEventoTitle">Nuevo Evento</span><button class="modal-close" onclick="cerrarModal('modalEvento')">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="eventoId">
+      <div>
+        <label class="form-label">Título <span style="color:var(--red)">*</span></label>
+        <input class="form-input" id="eventoTitulo" placeholder="Ej: Reunión con cliente">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="form-label">Fecha <span style="color:var(--red)">*</span></label>
+          <input class="form-input" type="date" id="eventoFecha">
+        </div>
+        <div>
+          <label class="form-label">Hora</label>
+          <input class="form-input" type="time" id="eventoHora" placeholder="HH:MM">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Tipo</label>
+        <select class="form-input" id="eventoTipo">
+          <option value="reunion">Reunión</option>
+          <option value="llamada">Llamada</option>
+          <option value="entrega">Entrega</option>
+          <option value="demo">Demo</option>
+          <option value="interno">Interno</option>
+          <option value="externo">Externo</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Cliente relacionado (opcional)</label>
+        <select class="form-input" id="eventoCliente">
+          <option value="">— Sin cliente —</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Descripción / Detalles</label>
+        <textarea class="form-input" id="eventoDescripcion" rows="3" placeholder="Detalles del evento, agenda, etc."></textarea>
+      </div>
+      <div id="eventoErr" class="error-msg" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalEvento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ USUARIOS ═══════════ -->
 <div class="page" id="page-usuarios">
   <div class="header">
     <div class="header-left"><h1>Usuarios</h1><p>Gestión de accesos y roles del equipo</p></div>
     <div class="header-actions"><button class="btn btn-primary" onclick="abrirModalUsuario()">＋ Nuevo Usuario</button></div>
   </div>
-  <div class="perm-box">🔒 Solo tú (Admin) puedes ver y gestionar usuarios. Los roles controlan qué puede hacer cada persona en el CRM.</div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px">
-    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Tabla de permisos por rol</div>
-    <table style="font-size:12px">
-      <thead><tr><th>Función</th><th>Admin</th><th>Vendedor</th><th>Soporte</th><th>Desarrollador</th></tr></thead>
-      <tbody>
-        <tr><td>Ver clientes</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-        <tr><td>Editar/crear clientes</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Crear cotizaciones</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Ver cotizaciones</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-        <tr><td>Crear proyectos dev</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Gestionar proyectos dev</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Reportes</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Gestionar usuarios</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Configuración</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
-      </tbody>
-    </table>
+
+  <!-- Tabla de usuarios -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <span class="panel-title">Miembros del equipo</span>
+      <span class="count-badge" id="userCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Creado</th>
+            <th style="text-align:right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+    </div>
   </div>
-  <div class="user-grid" id="userGrid"></div>
+
+  <!-- Tabla de permisos -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🔒 Permisos por rol</span></div>
+    <div class="table-wrap" style="padding:4px 0">
+      <table class="perm-table">
+        <thead>
+          <tr>
+            <th style="min-width:180px">Función</th>
+            <th><span class="badge badge-admin">Admin</span></th>
+            <th><span class="badge badge-vendedor">Vendedor</span></th>
+            <th><span class="badge badge-soporte">Soporte</span></th>
+            <th><span class="badge badge-desarrollador">Dev</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Ver clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Editar / crear clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Crear cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Ver cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Crear proyectos dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Ver / chatear proyectos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
+          <tr><td>Actualizar estado / progreso dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-yes">●</span></td></tr>
+          <tr><td>Campañas — ver prospectos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Campañas — importar / eliminar</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Calendario — ver eventos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
+          <tr><td>Calendario — crear / editar eventos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Tickets — crear</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
+          <tr><td>Tickets — gestionar todos</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Reportes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Gestionar usuarios</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Configuración</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ CONFIGURACIÓN ═══════════ -->
@@ -1268,6 +1440,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     if (pg === 'usuarios')    renderUsuarios();
     if (pg === 'campanas')    initCampanas();
     if (pg === 'tickets')     { loadTickets().then(initTickets); }
+    if (pg === 'calendario')  { loadEventos().then(renderCalendario); }
   });
 });
 
@@ -1463,6 +1636,7 @@ function navTo(page) {
   if (page === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
   if (page === 'reportes')    renderReportes();
   if (page === 'tickets')     { loadTickets().then(initTickets); }
+  if (page === 'calendario')  { loadEventos().then(renderCalendario); }
 }
 
 function irANuevoCliente() {
@@ -1989,28 +2163,37 @@ document.getElementById('msgTexto').addEventListener('keydown',e=>{if(e.key==='E
 // USUARIOS
 // ═══════════════════════════════════════════════════
 function renderUsuarios() {
-  const grid=document.getElementById('userGrid');
-  grid.innerHTML='';
-  usuarios.forEach(u=>{
-    const div=document.createElement('div');
-    div.className='user-card';
-    const avatarColors={admin:'linear-gradient(135deg,#a855f7,#6366f1)',vendedor:'linear-gradient(135deg,#10b981,#3b82f6)',soporte:'linear-gradient(135deg,#3b82f6,#6366f1)',desarrollador:'linear-gradient(135deg,#f59e0b,#ef4444)'};
-    div.innerHTML=`
-      <div class="user-card-header">
-        <div class="avatar-lg" style="background:${avatarColors[u.rol]||'linear-gradient(135deg,var(--accent),var(--purple))'}">${u.avatar||u.nombre.slice(0,2).toUpperCase()}</div>
-        <div><div class="user-card-name">${escHtml(u.nombre)}</div><div class="user-card-email">${escHtml(u.email)}</div></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="badge badge-${u.rol}">${ROL_LABELS[u.rol]||u.rol}</span>
-        <span class="badge ${u.activo===false?'badge-inactivo':'badge-activo'}">${u.activo===false?'Inactivo':'Activo'}</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted)">Creado: ${fmtDate(u.creado)}</div>
-      <div class="user-card-actions">
-        ${u.id!==SESSION.user.id?`<button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id})">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">${u.activo===false?'✅ Reactivar':'🚫 Desactivar'}</button>`:'<span style="font-size:12px;color:var(--muted)">← Tú</span>'}
-      </div>`;
-    grid.appendChild(div);
-  });
+  const tbody=document.getElementById('userTableBody');
+  const countEl=document.getElementById('userCount');
+  if(!tbody)return;
+  const avatarColors={admin:'linear-gradient(135deg,#a855f7,#6366f1)',vendedor:'linear-gradient(135deg,#10b981,#3b82f6)',soporte:'linear-gradient(135deg,#3b82f6,#6366f1)',desarrollador:'linear-gradient(135deg,#f59e0b,#ef4444)'};
+  if(countEl) countEl.textContent=usuarios.length;
+  tbody.innerHTML=usuarios.map(u=>{
+    const isMe=u.id===SESSION.user.id;
+    const ini=(u.nombre||'?').slice(0,2).toUpperCase();
+    const grad=avatarColors[u.rol]||'linear-gradient(135deg,var(--accent),var(--purple))';
+    const activo=u.activo!==false;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar" style="background:${grad};flex-shrink:0">${ini}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${escHtml(u.nombre)}${isMe?' <span style="font-size:10px;color:var(--muted);font-weight:400">(tú)</span>':''}</div>
+            <div style="font-size:11px;color:var(--muted)">${escHtml(u.email)}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge badge-${u.rol}">${ROL_LABELS[u.rol]||u.rol}</span></td>
+      <td><span class="badge ${activo?'badge-activo':'badge-inactivo'}">${activo?'Activo':'Inactivo'}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(u.creado)}</td>
+      <td style="text-align:right">
+        ${!isMe?`<div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="editarUsuario(${u.id})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="desactivarUsuario(${u.id})">${activo?'Desactivar':'Reactivar'}</button>
+        </div>`:''}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function abrirModalUsuario(id=null) {
@@ -2049,6 +2232,209 @@ async function desactivarUsuario(id) {
   if(!nuevoEstado&&!confirm(`¿Desactivar a ${u?.nombre}? No podrá iniciar sesión.`))return;
   await api('PUT',`/api/usuarios/${id}`,{activo:nuevoEstado});
   await loadUsuarios();renderUsuarios();showToast(nuevoEstado?'✅ Usuario reactivado':'🚫 Usuario desactivado');
+}
+
+// ═══════════════════════════════════════════════════
+// CALENDARIO
+// ═══════════════════════════════════════════════════
+let eventos = [];
+let calAnio = new Date().getFullYear();
+let calMesActual = new Date().getMonth();
+let calDiaSeleccionado = null;
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const TIPO_LABELS = {reunion:'Reunión',llamada:'Llamada',entrega:'Entrega',demo:'Demo',interno:'Interno',externo:'Externo'};
+
+async function loadEventos() {
+  const d = await api('GET', '/api/eventos');
+  if (d) eventos = d;
+}
+
+function calPuedeEditar() {
+  return SESSION.user && (SESSION.user.rol === 'admin' || SESSION.user.rol === 'vendedor');
+}
+
+function calMes(delta) {
+  calMesActual += delta;
+  if (calMesActual > 11) { calMesActual = 0; calAnio++; }
+  if (calMesActual < 0) { calMesActual = 11; calAnio--; }
+  renderCalendario();
+}
+
+function calHoy() {
+  const hoy = new Date();
+  calAnio = hoy.getFullYear();
+  calMesActual = hoy.getMonth();
+  renderCalendario();
+}
+
+function renderCalendario() {
+  const titulo = document.getElementById('calMesTitulo');
+  const grid = document.getElementById('calGrid');
+  const btnNuevo = document.getElementById('btnNuevoEvento');
+  if (!grid) return;
+
+  if (titulo) titulo.textContent = `${MESES[calMesActual]} ${calAnio}`;
+  if (btnNuevo) btnNuevo.style.display = calPuedeEditar() ? '' : 'none';
+
+  const hoy = new Date();
+  const primerDia = new Date(calAnio, calMesActual, 1);
+  const ultimoDia = new Date(calAnio, calMesActual + 1, 0);
+  const startDow = primerDia.getDay();
+
+  let html = DIAS_SEMANA.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // Días del mes anterior para rellenar
+  const diasMesAnt = new Date(calAnio, calMesActual, 0).getDate();
+  for (let i = startDow - 1; i >= 0; i--) {
+    const d = diasMesAnt - i;
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+
+  // Días del mes actual
+  for (let d = 1; d <= ultimoDia.getDate(); d++) {
+    const fecha = `${calAnio}-${String(calMesActual+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evsDia = eventos.filter(e => e.fecha === fecha);
+    const esHoy = hoy.getFullYear()===calAnio && hoy.getMonth()===calMesActual && hoy.getDate()===d;
+    const selClass = calDiaSeleccionado === fecha ? ' selected' : '';
+    const hasClass = evsDia.length ? ' has-events' : '';
+    const chips = evsDia.slice(0,3).map(e =>
+      `<div class="cal-event-chip tipo-${e.tipo||'reunion'}" title="${escAttr(e.titulo)}">${escHtml(e.titulo)}</div>`
+    ).join('');
+    const mas = evsDia.length > 3 ? `<div class="cal-more">+${evsDia.length-3} más</div>` : '';
+    html += `<div class="cal-day${esHoy?' today':''}${hasClass}${selClass}" onclick="calClickDia('${fecha}',${d})">
+      <div class="cal-day-num">${d}</div>
+      ${chips}${mas}
+    </div>`;
+  }
+
+  // Relleno al final
+  const totalCeldas = startDow + ultimoDia.getDate();
+  const resto = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
+  for (let d = 1; d <= resto; d++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function calClickDia(fecha, numDia) {
+  calDiaSeleccionado = fecha;
+  renderCalendario();
+  renderCalDayPanel(fecha);
+}
+
+function renderCalDayPanel(fecha) {
+  const panel = document.getElementById('calDayPanel');
+  const title = document.getElementById('calDayTitle');
+  const eventsDiv = document.getElementById('calDayEvents');
+  const btnAdd = document.getElementById('btnNuevoEventoDia');
+  if (!panel) return;
+
+  const [anio, mes, dia] = fecha.split('-').map(Number);
+  const nombreDia = new Date(anio, mes-1, dia).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+  title.textContent = nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1);
+  if (btnAdd) btnAdd.style.display = calPuedeEditar() ? '' : 'none';
+
+  const evsDia = eventos.filter(e => e.fecha === fecha).sort((a,b) => (a.hora||'00:00').localeCompare(b.hora||'00:00'));
+
+  if (evsDia.length === 0) {
+    eventsDiv.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Sin eventos para este día</div>';
+  } else {
+    eventsDiv.innerHTML = evsDia.map(e => {
+      const cli = e.clienteId ? clientes.find(c => c.id == e.clienteId) : null;
+      const cliStr = cli ? `<span style="font-size:11px;background:var(--surface);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">👥 ${escHtml(cli.nombre)}</span>` : '';
+      const hora = e.hora ? `<span style="font-size:11px;color:var(--muted)">${e.hora}</span>` : '';
+      const acciones = calPuedeEditar() ? `<div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalEvento('${e._id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarEvento('${e._id}')">Eliminar</button>
+      </div>` : '';
+      return `<div class="evento-card tipo-${e.tipo||'reunion'}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div class="evento-titulo">${escHtml(e.titulo)}</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            ${hora}
+            <span class="cal-event-chip tipo-${e.tipo||'reunion'}">${TIPO_LABELS[e.tipo]||e.tipo}</span>
+          </div>
+        </div>
+        ${cliStr ? `<div style="margin-top:6px">${cliStr}</div>` : ''}
+        ${e.descripcion ? `<div style="font-size:12px;color:var(--muted);margin-top:6px">${escHtml(e.descripcion)}</div>` : ''}
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Creado por ${escHtml(e.autorNombre||'—')}</div>
+        ${acciones}
+      </div>`;
+    }).join('');
+  }
+
+  panel.style.display = '';
+}
+
+function abrirModalEvento(id=null, fechaPreset=null) {
+  const hoy = fechaPreset || new Date().toISOString().slice(0,10);
+  document.getElementById('eventoId').value = id || '';
+  document.getElementById('modalEventoTitle').textContent = id ? 'Editar Evento' : 'Nuevo Evento';
+  document.getElementById('eventoTitulo').value = '';
+  document.getElementById('eventoFecha').value = hoy;
+  document.getElementById('eventoHora').value = '';
+  document.getElementById('eventoTipo').value = 'reunion';
+  document.getElementById('eventoCliente').value = '';
+  document.getElementById('eventoDescripcion').value = '';
+  document.getElementById('eventoErr').style.display = 'none';
+
+  // Poblar select de clientes
+  const sel = document.getElementById('eventoCliente');
+  sel.innerHTML = '<option value="">— Sin cliente —</option>' +
+    clientes.map(c => `<option value="${c.id}">${escAttr(c.nombre)}</option>`).join('');
+
+  if (id) {
+    const ev = eventos.find(e => e._id === id);
+    if (ev) {
+      document.getElementById('eventoTitulo').value = ev.titulo || '';
+      document.getElementById('eventoFecha').value = ev.fecha || hoy;
+      document.getElementById('eventoHora').value = ev.hora || '';
+      document.getElementById('eventoTipo').value = ev.tipo || 'reunion';
+      document.getElementById('eventoCliente').value = ev.clienteId || '';
+      document.getElementById('eventoDescripcion').value = ev.descripcion || '';
+    }
+  }
+  document.getElementById('modalEvento').classList.add('open');
+}
+
+async function guardarEvento() {
+  const id = document.getElementById('eventoId').value;
+  const titulo = document.getElementById('eventoTitulo').value.trim();
+  const fecha = document.getElementById('eventoFecha').value;
+  const err = document.getElementById('eventoErr');
+  if (!titulo || !fecha) { err.textContent = 'Título y fecha son requeridos.'; err.style.display = 'block'; return; }
+
+  const payload = {
+    titulo,
+    fecha,
+    hora: document.getElementById('eventoHora').value || null,
+    tipo: document.getElementById('eventoTipo').value,
+    clienteId: document.getElementById('eventoCliente').value || null,
+    descripcion: document.getElementById('eventoDescripcion').value.trim() || null,
+  };
+
+  const r = id
+    ? await api('PUT', `/api/eventos/${id}`, payload)
+    : await api('POST', '/api/eventos', payload);
+
+  if (!r || r.error) { err.textContent = r?.error || 'Error al guardar'; err.style.display = 'block'; return; }
+  cerrarModal('modalEvento');
+  await loadEventos();
+  renderCalendario();
+  if (calDiaSeleccionado) renderCalDayPanel(calDiaSeleccionado);
+  showToast('Evento guardado');
+}
+
+async function eliminarEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return;
+  await api('DELETE', `/api/eventos/${id}`);
+  await loadEventos();
+  renderCalendario();
+  if (calDiaSeleccionado) renderCalDayPanel(calDiaSeleccionado);
+  showToast('Evento eliminado');
 }
 
 // ═══════════════════════════════════════════════════

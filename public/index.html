@@ -346,6 +346,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .com-result-name{font-size:14px;font-weight:700}
 .com-result-amount{font-size:20px;font-weight:800;color:var(--green)}
 .com-result-pct{font-size:12px;color:var(--muted)}
+.hip-chip{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:12px;transition:border-color .15s}
+.hip-chip:hover{border-color:var(--accent)}
+.hip-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;transition:color .15s}
+.hip-chip button:hover{color:var(--red)}
 /* CALENDARIO */
 .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .cal-mes-titulo{font-size:18px;font-weight:800;letter-spacing:-.3px;text-transform:capitalize;flex:1;text-align:center}
@@ -668,17 +672,28 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="panel" style="margin-top:20px">
       <div class="panel-header"><span class="panel-title">Caso hipotético</span><span style="font-size:12px;color:var(--muted)">Ingresa cualquier monto y calcula sin seleccionar proyectos</span></div>
       <div style="padding:14px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;gap:12px;align-items:flex-end">
+
+        <!-- Presets guardados -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Presets guardados</div>
+          <div id="hipPresets" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px">
+            <span style="font-size:12px;color:var(--muted);align-self:center" id="hipPresetsEmpty">Sin presets</span>
+          </div>
+        </div>
+
+        <!-- Input monto + guardar preset -->
+        <div style="display:flex;gap:8px;align-items:flex-end">
           <div style="flex:1">
             <label class="form-label">Ganancia total</label>
-            <div style="display:flex;align-items:center;gap:0">
+            <div style="display:flex;align-items:center">
               <span style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-size:14px;color:var(--muted)">$</span>
               <input class="form-input" id="hipMonto" type="number" min="0" step="0.01" placeholder="0.00"
                 style="border-radius:0 8px 8px 0;border-left:none" oninput="calcularHipotetico()">
             </div>
           </div>
-          <div style="font-size:12px;color:var(--muted);padding-bottom:10px">Usa los % asignados arriba</div>
+          <button class="btn btn-secondary" style="white-space:nowrap;padding:8px 14px" onclick="hipGuardarPreset()">＋ Guardar preset</button>
         </div>
+
         <div id="hipResultado" style="display:none;flex-direction:column;gap:8px"></div>
       </div>
     </div>
@@ -2081,6 +2096,7 @@ function initComisiones() {
 
   actualizarSumaPorcentajes();
   document.getElementById('comResultado').style.display = 'none';
+  hipRenderPresets();
 }
 
 function comToggleProyecto(id, checked) {
@@ -2186,6 +2202,60 @@ function calcularHipotetico() {
       </div>`).join('')}`;
   el.style.display = 'flex';
   el.style.flexDirection = 'column';
+}
+
+function hipCargarPresets() {
+  try { return JSON.parse(localStorage.getItem('crm_hip_presets') || '[]'); }
+  catch { return []; }
+}
+
+function hipGuardarPresets(presets) {
+  localStorage.setItem('crm_hip_presets', JSON.stringify(presets));
+}
+
+function hipGuardarPreset() {
+  const monto = parseFloat(document.getElementById('hipMonto').value);
+  if (!monto || monto <= 0) { showToast('Ingresa un monto primero', 'error'); return; }
+  const nombre = prompt('Nombre para este preset (ej: "Web básica", "Pack premium"):');
+  if (!nombre || !nombre.trim()) return;
+  const presets = hipCargarPresets();
+  presets.push({ id: Date.now(), nombre: nombre.trim(), monto });
+  hipGuardarPresets(presets);
+  hipRenderPresets();
+  showToast('Preset guardado');
+}
+
+function hipEliminarPreset(id) {
+  const presets = hipCargarPresets().filter(p => p.id !== id);
+  hipGuardarPresets(presets);
+  hipRenderPresets();
+}
+
+function hipAplicarPreset(monto) {
+  document.getElementById('hipMonto').value = monto;
+  calcularHipotetico();
+}
+
+function hipRenderPresets() {
+  const container = document.getElementById('hipPresets');
+  const empty = document.getElementById('hipPresetsEmpty');
+  if (!container) return;
+  const presets = hipCargarPresets();
+  if (!empty) {
+    // noop
+  } else {
+    empty.style.display = presets.length ? 'none' : '';
+  }
+  // Elimina chips anteriores (no el span de vacío)
+  container.querySelectorAll('.hip-chip').forEach(c => c.remove());
+  presets.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'hip-chip';
+    chip.innerHTML = `
+      <span onclick="hipAplicarPreset(${p.monto})" style="cursor:pointer">${escHtml(p.nombre)} <strong>$${p.monto.toLocaleString('en-US',{minimumFractionDigits:2})}</strong></span>
+      <button onclick="hipEliminarPreset(${p.id})" title="Eliminar">×</button>`;
+    container.appendChild(chip);
+  });
 }
 
 // ═══════════════════════════════════════════════════

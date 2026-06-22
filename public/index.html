@@ -2374,7 +2374,7 @@ function renderCotizaciones() {
   list.innerHTML='';
   if (!cotizaciones.length) { empty.style.display='block'; return; }
   empty.style.display='none';
-  const canEdit = ['admin','vendedor'].includes(SESSION.user.rol);
+  const canEdit = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
   cotizaciones.slice().reverse().forEach(c => {
     const total = (c.items||[]).reduce((s,it)=>s+(parseFloat(it.precio||0)*parseFloat(it.cantidad||1)),0);
     const div=document.createElement('div');
@@ -2722,7 +2722,7 @@ function renderProyectos() {
   grid.innerHTML='';
   if(!filtered.length){empty.style.display='block';return;}
   empty.style.display='none';
-  const canEdit=['admin','vendedor'].includes(SESSION.user.rol);
+  const canEdit=['admin','vendedor','soporte'].includes(SESSION.user.rol);
   const isDev=SESSION.user.rol==='desarrollador';
   filtered.forEach(p=>{
     const div=document.createElement('div');

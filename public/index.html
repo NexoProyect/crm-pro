@@ -3916,7 +3916,7 @@ function abrirDetalleTicket(id) {
     document.getElementById('tdRespTexto').value = '';
   }
 
-  // Acciones: admin gestiona todo; creador puede cerrar/marcar resuelto y borrar el suyo
+  // Acciones: admin gestiona todo; cualquier no-admin puede escalar y cerrar; solo el creador puede eliminar
   const adminDiv = document.getElementById('tdAdminAcciones');
   if (isAdmin) {
     const estadoOpts = [
@@ -3926,7 +3926,7 @@ function abrirDetalleTicket(id) {
       `<button class="btn btn-secondary btn-sm" onclick="cambiarEstadoTicket(${t.id},'${v}')">${l}</button>`
     ).join('') +
     `<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑 Eliminar</button>`;
-  } else if (esMio) {
+  } else {
     const btns = [];
     if (t.estado === 'cerrado') {
       btns.push(`<button class="btn btn-secondary btn-sm" onclick="cambiarEstadoTicket(${t.id},'abierto')">🔵 Reabrir</button>`);
@@ -3934,9 +3934,9 @@ function abrirDetalleTicket(id) {
       btns.push(`<button class="btn btn-success btn-sm" onclick="cambiarEstadoTicket(${t.id},'cerrado')">✅ Marcar resuelto</button>`);
     }
     btns.push(`<button class="btn btn-warning btn-sm" onclick="escalarTicket(${t.id})" title="Notificar al admin que necesita atención urgente">🚨 Escalar al Admin</button>`);
-    btns.push(`<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑 Eliminar</button>`);
+    if (esMio) btns.push(`<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑 Eliminar</button>`);
     adminDiv.innerHTML = btns.join('');
-  } else { adminDiv.innerHTML = ''; }
+  }
 
   document.getElementById('modalTicketDetalle').classList.add('open');
 }

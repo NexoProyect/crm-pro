@@ -400,13 +400,15 @@ app.put('/api/tickets/:id', auth(), async (req, res) => {
   const idx = tickets.findIndex(t => t.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   const t = tickets[idx];
-  if (req.user.rol !== 'admin' && t.autorId !== req.user.id)
-    return res.status(403).json({ error: 'Sin permiso' });
+  const esAutor = t.autorId === req.user.id;
+  const esAdmin = req.user.rol === 'admin';
   const { estado, prioridad, titulo, descripcion } = req.body;
-  if (estado)      t.estado = estado;
-  if (prioridad)   t.prioridad = prioridad;
-  if (titulo)      t.titulo = titulo;
-  if (descripcion) t.descripcion = descripcion;
+  // Estado y prioridad: cualquier miembro del equipo puede cambiarlos (escalar, cerrar)
+  if (estado)    t.estado = estado;
+  if (prioridad) t.prioridad = prioridad;
+  // Título y descripción: solo el autor o admin
+  if (titulo      && (esAutor || esAdmin)) t.titulo = titulo;
+  if (descripcion && (esAutor || esAdmin)) t.descripcion = descripcion;
   t.actualizadoEn = new Date().toISOString();
   await write('tickets', tickets);
   res.json({ ok: true });

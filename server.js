@@ -166,6 +166,13 @@ app.get('/api/usuarios', auth(['admin']), async (req, res) => {
   res.json((await read('usuarios')).map(({ password, ...u }) => u));
 });
 
+// Endpoint para todos los roles — solo devuelve desarrolladores activos (para asignación en proyectos)
+app.get('/api/usuarios/desarrolladores', auth(), async (req, res) => {
+  res.json((await read('usuarios'))
+    .filter(u => u.rol === 'desarrollador' && u.activo !== false)
+    .map(({ password, ...u }) => u));
+});
+
 app.post('/api/usuarios', auth(['admin']), async (req, res) => {
   const usuarios = await read('usuarios');
   const { nombre, email, password, rol, avatar } = req.body;

@@ -645,6 +645,46 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- ════ MODAL AGREGAR AL CRM ════ -->
+<div class="modal-overlay" id="modalAgregarCRM">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><span class="modal-title">Agregar al CRM</span><span class="modal-close" onclick="cerrarModal('modalAgregarCRM')">×</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="agregarCampId">
+      <input type="hidden" id="agregarPid">
+      <p id="agregarNombreLabel" style="font-size:14px;font-weight:600;margin-bottom:16px"></p>
+      <div class="form-group">
+        <label class="form-label">Clasificación (Grupo)</label>
+        <select class="form-select" id="agregarGrupo">
+          <option value="Critico">Crítico — alta prioridad</option>
+          <option value="Medio" selected>Medio — interés moderado</option>
+          <option value="Leve">Leve — exploración inicial</option>
+          <option value="Confirmado">Confirmado — ya es cliente</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado inicial</label>
+        <select class="form-select" id="agregarEstado">
+          <option value="Sin contactar">Sin contactar</option>
+          <option value="Llamado">Llamado</option>
+          <option value="WhatsApp" selected>WhatsApp</option>
+          <option value="Seguimiento">Seguimiento</option>
+          <option value="Cliente">Cliente</option>
+          <option value="Mayor prioridad">Mayor prioridad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <input class="form-input" id="agregarNotas" placeholder="Observaciones del contacto…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalAgregarCRM')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarAgregarCRM()">➕ Agregar al CRM</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ MODAL IMPORTAR CAMPAÑA ════ -->
 <div class="modal-overlay" id="modalImportCamp">
   <div class="modal" style="max-width:660px">
@@ -670,8 +710,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="modal-header"><span class="modal-title" id="modalCotTitle">Nueva Cotización</span><span class="modal-close" onclick="cerrarModal('modalCot')">×</span></div>
     <div class="modal-body">
       <input type="hidden" id="cotId">
+      <input type="hidden" id="cotClienteId">
       <div class="form-group"><label class="form-label">Cliente</label>
-        <select class="form-select" id="cotCliente"></select>
+        <input class="form-input" id="cotClienteSearch" list="cotClienteList" placeholder="Buscar cliente…" autocomplete="off" oninput="onCotClienteSearch()">
+        <datalist id="cotClienteList"></datalist>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group"><label class="form-label">Tipo de proyecto</label>
@@ -709,7 +751,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="modal-header"><span class="modal-title" id="modalProjTitle">Nuevo Proyecto</span><span class="modal-close" onclick="cerrarModal('modalProj')">×</span></div>
     <div class="modal-body">
       <input type="hidden" id="projId">
-      <div class="form-group"><label class="form-label">Cliente</label><select class="form-select" id="projCliente"></select></div>
+      <input type="hidden" id="projClienteId">
+      <div class="form-group"><label class="form-label">Cliente</label>
+        <input class="form-input" id="projClienteSearch" list="projClienteList" placeholder="Buscar cliente…" autocomplete="off" oninput="onProjClienteSearch()">
+        <datalist id="projClienteList"></datalist>
+      </div>
       <div class="form-group"><label class="form-label">Nombre del proyecto</label><input class="form-input" id="projNombre" placeholder="Ej: Web Corporativa Karibo"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group"><label class="form-label">Tipo</label>
@@ -917,7 +963,7 @@ async function iniciarApp() {
   applyRoleUI();
 
   // Load data
-  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos(), loadCampanas()]);
+  await Promise.all([loadClientes(), loadCotizaciones(), loadProyectos(), loadCampanas(), loadDesarrolladores()]);
   if (u.rol === 'admin') await loadUsuarios();
 
   render();
@@ -997,10 +1043,12 @@ document.querySelectorAll('[data-dtab]').forEach(t => {
 // ═══════════════════════════════════════════════════
 // LOAD DATA
 // ═══════════════════════════════════════════════════
-async function loadClientes()     { const d = await api('GET','/api/clientes');     if (d) clientes = d; }
-async function loadCotizaciones() { const d = await api('GET','/api/cotizaciones'); if (d) cotizaciones = d; }
-async function loadProyectos()    { const d = await api('GET','/api/proyectos');    if (d) proyectos = d; }
-async function loadUsuarios()     { const d = await api('GET','/api/usuarios');     if (d) usuarios = d; }
+let desarrolladores = [];
+async function loadClientes()        { const d = await api('GET','/api/clientes');                   if (d) clientes = d; }
+async function loadCotizaciones()    { const d = await api('GET','/api/cotizaciones');               if (d) cotizaciones = d; }
+async function loadProyectos()       { const d = await api('GET','/api/proyectos');                  if (d) proyectos = d; }
+async function loadUsuarios()        { const d = await api('GET','/api/usuarios');                   if (d) usuarios = d; }
+async function loadDesarrolladores() { const d = await api('GET','/api/usuarios/desarrolladores');   if (d) desarrolladores = d; }
 
 // ═══════════════════════════════════════════════════
 // RENDER TABLE HELPER
@@ -1204,11 +1252,29 @@ function renderCotizaciones() {
   });
 }
 
+function poblarClienteDatalist(listId) {
+  const dl = document.getElementById(listId);
+  dl.innerHTML = clientes.map(c => `<option value="${escAttr(c.nombre)}" data-id="${c.id}">`).join('');
+}
+
+function onCotClienteSearch() {
+  const val = document.getElementById('cotClienteSearch').value;
+  const match = clientes.find(c => c.nombre === val);
+  document.getElementById('cotClienteId').value = match ? match.id : '';
+}
+
+function onProjClienteSearch() {
+  const val = document.getElementById('projClienteSearch').value;
+  const match = clientes.find(c => c.nombre === val);
+  document.getElementById('projClienteId').value = match ? match.id : '';
+}
+
 function abrirModalCot(id=null) {
   document.getElementById('cotId').value = id||'';
   document.getElementById('modalCotTitle').textContent = id ? 'Editar Cotización' : 'Nueva Cotización';
-  const sel=document.getElementById('cotCliente');
-  sel.innerHTML=clientes.map(c=>`<option value="${c.id}" data-nombre="${escAttr(c.nombre)}">${escHtml(c.nombre)}</option>`).join('');
+  poblarClienteDatalist('cotClienteList');
+  document.getElementById('cotClienteSearch').value = '';
+  document.getElementById('cotClienteId').value = '';
   document.getElementById('cotItems').innerHTML='';
   document.getElementById('cotNotas').value='';
   document.getElementById('cotTotal').textContent='$0.00';
@@ -1216,7 +1282,9 @@ function abrirModalCot(id=null) {
   if (id) {
     const c=cotizaciones.find(x=>x.id===id);
     if(c){
-      sel.value=c.clienteId;
+      const cli = clientes.find(x=>x.id===c.clienteId);
+      document.getElementById('cotClienteSearch').value = cli?.nombre || '';
+      document.getElementById('cotClienteId').value = c.clienteId;
       document.getElementById('cotTipo').value=c.tipo;
       document.getElementById('cotEstado').value=c.estado;
       document.getElementById('cotNotas').value=c.notas||'';
@@ -1250,9 +1318,9 @@ function calcTotal() {
 }
 
 async function guardarCot() {
-  const clienteEl=document.getElementById('cotCliente');
-  const clienteId=parseInt(clienteEl.value);
-  const clienteNombre=clienteEl.options[clienteEl.selectedIndex]?.dataset.nombre||'';
+  const clienteId=parseInt(document.getElementById('cotClienteId').value);
+  const clienteNombre=document.getElementById('cotClienteSearch').value||'';
+  if (!clienteId) { showToast('⚠️ Selecciona un cliente válido'); return; }
   const items=[...document.querySelectorAll('#cotItems tr')].map(tr=>{
     const ins=[...tr.querySelectorAll('input')];
     return {desc:ins[0]?.value||'',cantidad:parseFloat(ins[1]?.value)||1,precio:parseFloat(ins[2]?.value)||0};
@@ -1331,11 +1399,11 @@ document.getElementById('fProjStatus').addEventListener('change', renderProyecto
 function abrirModalProj(id=null) {
   document.getElementById('projId').value=id||'';
   document.getElementById('modalProjTitle').textContent=id?'Editar Proyecto':'Nuevo Proyecto';
-  const selC=document.getElementById('projCliente');
-  selC.innerHTML=clientes.map(c=>`<option value="${c.id}" data-nombre="${escAttr(c.nombre)}">${escHtml(c.nombre)}</option>`).join('');
+  poblarClienteDatalist('projClienteList');
+  document.getElementById('projClienteSearch').value='';
+  document.getElementById('projClienteId').value='';
   const selD=document.getElementById('projDev');
-  const devs=usuarios.filter(u=>u.rol==='desarrollador'&&u.activo!==false);
-  selD.innerHTML='<option value="">Sin asignar</option>'+devs.map(u=>`<option value="${u.id}" data-nombre="${escAttr(u.nombre)}">${escHtml(u.nombre)}</option>`).join('');
+  selD.innerHTML='<option value="">Sin asignar</option>'+desarrolladores.map(u=>`<option value="${u.id}" data-nombre="${escAttr(u.nombre)}">${escHtml(u.nombre)}</option>`).join('');
   document.getElementById('projNombre').value='';
   document.getElementById('projTipo').value='Sitio web corporativo';
   document.getElementById('projNotasDev').value='';
@@ -1346,7 +1414,9 @@ function abrirModalProj(id=null) {
   if (id) {
     const p=proyectos.find(x=>x.id===id);
     if(p){
-      selC.value=p.clienteId;
+      const cli=clientes.find(x=>x.id===p.clienteId);
+      document.getElementById('projClienteSearch').value=cli?.nombre||'';
+      document.getElementById('projClienteId').value=p.clienteId||'';
       selD.value=p.devId||'';
       document.getElementById('projNombre').value=p.nombre||'';
       document.getElementById('projTipo').value=p.tipo||'Sitio web corporativo';
@@ -1363,11 +1433,13 @@ function abrirModalProj(id=null) {
 function editarProj(id) { abrirModalProj(id); }
 
 async function guardarProj() {
-  const clienteEl=document.getElementById('projCliente');
+  const clienteId=parseInt(document.getElementById('projClienteId').value);
+  const clienteNombre=document.getElementById('projClienteSearch').value||'';
+  if (!clienteId) { showToast('⚠️ Selecciona un cliente válido'); return; }
   const devEl=document.getElementById('projDev');
   const payload={
-    clienteId:parseInt(clienteEl.value),
-    clienteNombre:clienteEl.options[clienteEl.selectedIndex]?.dataset.nombre||'',
+    clienteId,
+    clienteNombre,
     devId:devEl.value?parseInt(devEl.value):null,
     devNombre:devEl.value?(devEl.options[devEl.selectedIndex]?.dataset.nombre||''):'',
     nombre:document.getElementById('projNombre').value,
@@ -1823,17 +1895,31 @@ async function descartarProspecto(campId, pid) {
   showToast('✕ Prospecto descartado');
 }
 
-async function agregarAlCRM(campId, pid) {
+function agregarAlCRM(campId, pid) {
   const camp = campanas.find(c => c.id === campId);
   const p = camp?.prospectos.find(x => x.id === pid);
   if (!p) return;
-  // Crear cliente en CRM con los datos del prospecto
+  document.getElementById('agregarCampId').value = campId;
+  document.getElementById('agregarPid').value = pid;
+  document.getElementById('agregarNombreLabel').textContent = p.nombre;
+  document.getElementById('agregarNotas').value = [p.tipo, p.auditoria_digital?.notas].filter(Boolean).join(' — ');
+  document.getElementById('agregarGrupo').value = 'Medio';
+  document.getElementById('agregarEstado').value = 'WhatsApp';
+  document.getElementById('modalAgregarCRM').classList.add('open');
+}
+
+async function confirmarAgregarCRM() {
+  const campId = document.getElementById('agregarCampId').value;
+  const pid    = parseInt(document.getElementById('agregarPid').value);
+  const camp   = campanas.find(c => c.id === campId);
+  const p      = camp?.prospectos.find(x => x.id === pid);
+  if (!p) return;
   const nuevo = {
     id: Date.now(),
     nombre: p.nombre,
-    grupo: 'Leve',
-    estado: 'Sin contactar',
-    notas: [p.tipo, p.auditoria_digital?.notas].filter(Boolean).join(' — '),
+    grupo: document.getElementById('agregarGrupo').value,
+    estado: document.getElementById('agregarEstado').value,
+    notas: document.getElementById('agregarNotas').value,
     proximaAccion: '',
     valor: 0,
     telefono: p.contacto?.telefono || '',
@@ -1842,6 +1928,8 @@ async function agregarAlCRM(campId, pid) {
   clientes.push(nuevo);
   await api('POST', '/api/clientes', clientes);
   await actualizarEstadoProspecto(campId, pid, { _estado: 'agregado' });
+  cerrarModal('modalAgregarCRM');
+  cerrarModal('modalProspDetail');
   showToast(`✅ ${p.nombre} agregado al CRM`);
 }
 

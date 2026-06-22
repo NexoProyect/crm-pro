@@ -226,6 +226,8 @@ tbody td{padding:11px 13px;font-size:13px;vertical-align:middle}
 
 /* TOAST */
 #toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--green);color:var(--text);padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow);display:none;z-index:9999;animation:slideIn .25s ease}
+#toast.toast-error{border-left-color:var(--red)}
+#toast.toast-warn{border-left-color:var(--yellow)}
 @keyframes slideIn{from{transform:translateY(10px);opacity:0}}
 
 /* TABS */
@@ -292,7 +294,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="login-err" id="loginErr"></div>
     <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" id="loginEmail" type="email" placeholder="correo@empresa.com"></div>
     <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" id="loginPass" type="password" placeholder="••••••••"></div>
-    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px" onclick="doLogin()">Entrar →</button>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px" id="loginBtn" onclick="doLogin()">Entrar →</button>
   </div>
 </div>
 
@@ -911,9 +913,12 @@ async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   const err   = document.getElementById('loginErr');
+  const btn   = document.getElementById('loginBtn');
   err.style.display = 'none';
   if (!email || !pass) { err.textContent = 'Completa todos los campos.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando…';
   const data = await api('POST', '/api/login', { email, password: pass });
+  btn.disabled = false; btn.textContent = 'Entrar →';
   if (!data || data.error) { err.textContent = data?.error || 'Error de conexión'; err.style.display = 'block'; return; }
   SESSION = { token: data.token, user: data.user };
   localStorage.setItem('crm_token', data.token);
@@ -1128,10 +1133,10 @@ function graf() {
   const el = document.getElementById(id);
   el.addEventListener('change', e => {
     const t=e.target,idx=t.dataset.idx,field=t.dataset.field;
-    if (idx!==undefined&&field) { clientes[idx][field]=t.value; if(field==='estado'){const d=t.closest('.estado-wrap')?.querySelector('.dot');if(d)d.style.background=ESTADO_COLORS[t.value]||'#64748b';} }
+    if (idx!==undefined&&field) { clientes[idx][field]=t.value; markUnsaved(); if(field==='estado'){const d=t.closest('.estado-wrap')?.querySelector('.dot');if(d)d.style.background=ESTADO_COLORS[t.value]||'#64748b';} }
   });
-  el.addEventListener('input', e => { const t=e.target; if(t.tagName==='INPUT'&&t.dataset.idx!==undefined&&t.dataset.field) clientes[t.dataset.idx][t.dataset.field]=t.value; });
-  el.addEventListener('click', e => { const b=e.target.closest('[data-del]'); if(b){clientes.splice(parseInt(b.dataset.del),1);render();renderClientes();} });
+  el.addEventListener('input', e => { const t=e.target; if(t.tagName==='INPUT'&&t.dataset.idx!==undefined&&t.dataset.field) { clientes[t.dataset.idx][t.dataset.field]=t.value; markUnsaved(); } });
+  el.addEventListener('click', e => { const b=e.target.closest('[data-del]'); if(b){clientes.splice(parseInt(b.dataset.del),1);markUnsaved();render();renderClientes();} });
 });
 
 // ═══════════════════════════════════════════════════
@@ -1150,13 +1155,34 @@ document.getElementById('q2').addEventListener('input', renderClientes);
 document.getElementById('f2').addEventListener('change', renderClientes);
 document.getElementById('fe').addEventListener('change', renderClientes);
 
+let _unsaved = false;
+function markUnsaved() {
+  _unsaved = true;
+  document.querySelectorAll('[onclick="guardar()"]').forEach(b => {
+    if (!b.dataset.orig) b.dataset.orig = b.textContent;
+    b.textContent = '💾 Guardar *';
+    b.classList.add('btn-warning');
+    b.classList.remove('btn-secondary');
+  });
+}
+function clearUnsaved() {
+  _unsaved = false;
+  document.querySelectorAll('[onclick="guardar()"]').forEach(b => {
+    if (b.dataset.orig) { b.textContent = b.dataset.orig; delete b.dataset.orig; }
+    b.classList.remove('btn-warning');
+    b.classList.add('btn-secondary');
+  });
+}
+
 function nuevo() {
   clientes.push({id:Date.now(),nombre:'Nuevo Cliente',grupo:'Leve',estado:'Sin contactar',notas:'',proximaAccion:'',valor:0});
+  markUnsaved();
   render();
   setTimeout(()=>{const rows=document.getElementById('tb').querySelectorAll('tr');if(rows.length)rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'center'});},50);
 }
 async function guardar() {
   await api('POST','/api/clientes',clientes);
+  clearUnsaved();
   showToast('✅ Guardado correctamente');
 }
 
@@ -1279,6 +1305,7 @@ function abrirModalCot(id=null) {
   document.getElementById('cotNotas').value='';
   document.getElementById('cotTotal').textContent='$0.00';
   document.getElementById('cotEstado').value='borrador';
+  document.getElementById('cotTipo').value='Sitio web corporativo';
   if (id) {
     const c=cotizaciones.find(x=>x.id===id);
     if(c){
@@ -1513,19 +1540,24 @@ function renderMensajes(p) {
   const list=document.getElementById('msgList');
   const msgs=p.mensajes||[];
   list.innerHTML=!msgs.length?'<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin mensajes aún.</div>'
-    :msgs.map(m=>`<div class="msg-bubble msg-${m.autorRol}"><div class="msg-meta">${escHtml(m.autor)} · ${ROL_LABELS[m.autorRol]||m.autorRol} · ${fmtDate(m.fecha)}</div>${m.tipo==='solicitud'?'🔴 ':m.tipo==='cambio'?'🟢 ':''}${escHtml(m.texto)}</div>`).join('');
+    :msgs.map(m=>`<div class="msg-bubble msg-${m.autorRol}"><div class="msg-meta">${escHtml(m.autor)} · ${ROL_LABELS[m.autorRol]||m.autorRol} · ${fmtDate(m.fecha,true)}</div>${m.tipo==='solicitud'?'🔴 ':m.tipo==='cambio'?'🟢 ':''}${escHtml(m.texto)}</div>`).join('');
   list.scrollTop=list.scrollHeight;
 }
 
 async function enviarMensaje() {
-  const texto=document.getElementById('msgTexto').value.trim();
+  const textoEl=document.getElementById('msgTexto');
+  const texto=textoEl.value.trim();
   const tipo =document.getElementById('msgTipo').value;
   if(!texto||!currentProjId)return;
+  const btn=document.querySelector('#modalProjDetail .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='…';}
   const msg=await api('POST',`/api/proyectos/${currentProjId}/mensaje`,{texto,tipo});
+  if(btn){btn.disabled=false;btn.textContent='Enviar';}
   if(msg){
     const idx=proyectos.findIndex(p=>p.id===currentProjId);
     if(idx>=0){if(!proyectos[idx].mensajes)proyectos[idx].mensajes=[];proyectos[idx].mensajes.push(msg);}
-    document.getElementById('msgTexto').value='';
+    textoEl.value='';
+    document.getElementById('msgTipo').value='mensaje';
     renderMensajes(proyectos[idx]);
     renderProyectos();
   }
@@ -1566,6 +1598,7 @@ function abrirModalUsuario(id=null) {
   document.getElementById('userNombre').value='';
   document.getElementById('userEmail').value='';
   document.getElementById('userPass').value='';
+  document.getElementById('userPass').placeholder=id?'Dejar vacío para no cambiar':'Mínimo 6 caracteres';
   document.getElementById('userRol').value='vendedor';
   document.getElementById('userErr').style.display='none';
   if(id){
@@ -1628,6 +1661,7 @@ async function confirmarLimpiar() {
   if(!confirm('¿Eliminar TODOS los clientes? Esta acción no se puede deshacer.'))return;
   clientes=[];
   await api('POST','/api/clientes',[]);
+  clearUnsaved();
   render();showToast('🗑️ Datos limpiados');
 }
 
@@ -1635,9 +1669,18 @@ async function confirmarLimpiar() {
 // UTILS
 // ═══════════════════════════════════════════════════
 function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
-function showToast(msg) { const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2800); }
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='';
+  if (type==='error'||msg.startsWith('❌')||msg.startsWith('⚠️')) t.classList.add('toast-error');
+  else if (type==='warn'||msg.startsWith('🗑')) t.classList.add('toast-warn');
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.display='none',2800);
+}
 function setAccent(c) { document.documentElement.style.setProperty('--accent',c);showToast('🎨 Color actualizado'); }
-function fmtDate(s) { if(!s)return'—';try{return new Date(s).toLocaleDateString('es-DO',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;} }
+function fmtDate(s,withTime=false) { if(!s)return'—';try{const d=new Date(s);if(withTime)return d.toLocaleString('es-DO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('es-DO',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;} }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
@@ -1870,8 +1913,16 @@ function actualizarBadgeModal(campId, pid) {
   const badge = document.getElementById('prospDetailEstadoBadge');
   badge.className = `prosp-estado-badge pe-${p._estado}`;
   badge.textContent = estadoLabels[p._estado] || p._estado;
-  // Refresh footer actions
-  abrirDetalleProspecto(campId, pid);
+  // Refresh footer actions without reopening the modal
+  const canAct = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
+  const footerAcc = document.getElementById('prospDetailFooterAcciones');
+  if (canAct) {
+    footerAcc.innerHTML = [
+      p._estado === 'pendiente'  ? `<button class="btn btn-warning btn-sm" onclick="marcarContactado('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">📞 Contactado</button>` : '',
+      p._estado !== 'agregado'   ? `<button class="btn btn-success btn-sm" onclick="agregarAlCRM('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">➕ Al CRM</button>` : '',
+      p._estado !== 'descartado' ? `<button class="btn btn-danger btn-sm" onclick="descartarProspecto('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">✕ Descartar</button>` : '',
+    ].join('');
+  }
 }
 
 async function actualizarEstadoProspecto(campId, pid, cambios) {
@@ -1927,9 +1978,11 @@ async function confirmarAgregarCRM() {
   };
   clientes.push(nuevo);
   await api('POST', '/api/clientes', clientes);
+  await loadClientes();
   await actualizarEstadoProspecto(campId, pid, { _estado: 'agregado' });
   cerrarModal('modalAgregarCRM');
   cerrarModal('modalProspDetail');
+  render();
   showToast(`✅ ${p.nombre} agregado al CRM`);
 }
 

@@ -251,7 +251,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .camp-stat-val{font-size:22px;font-weight:800}
 .camp-stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .prosp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
-.prosp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
+.prosp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s;cursor:pointer}
 .prosp-card:hover{border-color:var(--accent)}
 .prosp-card.estado-agregado{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.04)}
 .prosp-card.estado-descartado{opacity:.45;border-color:rgba(100,116,139,.3)}
@@ -262,8 +262,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .prosp-problemas{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:9px 11px}
 .prosp-problema-item{font-size:11px;color:#fca5a5;display:flex;align-items:flex-start;gap:5px;margin-bottom:3px}
 .prosp-problema-item:last-child{margin-bottom:0}
-.prosp-mensaje{background:var(--surface2);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--muted);line-height:1.5;max-height:70px;overflow:hidden;position:relative}
-.prosp-mensaje.expanded{max-height:none}
+.prosp-mensaje{background:var(--surface2);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--muted);line-height:1.5;max-height:56px;overflow:hidden;mask-image:linear-gradient(to bottom,black 50%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,black 50%,transparent 100%)}
 .prosp-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
 .prosp-estado-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
 .pe-pendiente{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
@@ -594,6 +593,57 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </div>
 
 </main>
+
+<!-- ════ MODAL DETALLE PROSPECTO ════ -->
+<div class="modal-overlay" id="modalProspDetail">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="prospDetailNombre">Prospecto</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px" id="prospDetailTipo"></div>
+      </div>
+      <span class="modal-close" onclick="cerrarModal('modalProspDetail')">×</span>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:18px">
+
+      <!-- Estado -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="prospDetailEstadoBadge" class="prosp-estado-badge"></span>
+        <div id="prospDetailAcciones" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- Contacto -->
+      <div>
+        <div class="form-label" style="margin-bottom:8px">Contacto</div>
+        <div id="prospDetailContacto" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+      </div>
+
+      <!-- Auditoría digital -->
+      <div id="prospDetailAuditoriaWrap">
+        <div class="form-label" style="margin-bottom:8px">Auditoría Digital</div>
+        <div id="prospDetailAuditoria" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px"></div>
+        <div id="prospDetailAuditoriaNotas" style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;line-height:1.6"></div>
+      </div>
+
+      <!-- Mensaje de outreach -->
+      <div id="prospDetailMensajeWrap">
+        <div class="form-label" style="margin-bottom:8px">Mensaje de Outreach</div>
+        <div id="prospDetailMensaje" style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap"></div>
+      </div>
+
+      <!-- Dirección / Plus code -->
+      <div id="prospDetailExtraWrap" style="display:none">
+        <div class="form-label" style="margin-bottom:8px">Ubicación</div>
+        <div id="prospDetailExtra" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalProspDetail')">← Volver</button>
+      <div id="prospDetailFooterAcciones" style="display:flex;gap:8px"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ════ MODAL IMPORTAR CAMPAÑA ════ -->
 <div class="modal-overlay" id="modalImportCamp">
@@ -1643,6 +1693,7 @@ function renderProspectos() {
 
     const div = document.createElement('div');
     div.className = `prosp-card estado-${p._estado}`;
+    div.addEventListener('click', e => { if (!e.target.closest('button')) abrirDetalleProspecto(campanaActual.id, p.id); });
     div.innerHTML = `
       <div>
         <div class="prosp-nombre">${escHtml(p.nombre)}</div>
@@ -1668,6 +1719,87 @@ function renderProspectos() {
       </div>`;
     grid.appendChild(div);
   });
+}
+
+function abrirDetalleProspecto(campId, pid) {
+  const camp = campanas.find(c => c.id === campId);
+  const p = camp?.prospectos.find(x => x.id === pid);
+  if (!p) return;
+  const c = p.contacto || {};
+  const ad = p.auditoria_digital || {};
+  const ou = p.outreach || {};
+  const canAct = ['admin','vendedor','soporte'].includes(SESSION.user.rol);
+  const estadoLabels = {pendiente:'Pendiente',contactado:'Contactado',agregado:'En CRM',descartado:'Descartado'};
+
+  document.getElementById('prospDetailNombre').textContent = p.nombre;
+  document.getElementById('prospDetailTipo').textContent = [p.tipo, p.zona].filter(Boolean).join(' · ');
+
+  // Badge estado
+  const badge = document.getElementById('prospDetailEstadoBadge');
+  badge.className = `prosp-estado-badge pe-${p._estado}`;
+  badge.textContent = estadoLabels[p._estado] || p._estado;
+
+  // Contacto
+  const contactoEl = document.getElementById('prospDetailContacto');
+  contactoEl.innerHTML = [
+    c.telefono ? `<div>📞 <a href="tel:${escAttr(c.telefono)}" style="color:var(--accent2)">${escHtml(c.telefono)}</a></div>` : '',
+    c.direccion ? `<div>📍 ${escHtml(c.direccion)}</div>` : '',
+    c.email    ? `<div>✉️ <a href="mailto:${escAttr(c.email)}" style="color:var(--accent2)">${escHtml(c.email)}</a></div>` : '',
+    ...(c.redes||[]).map(r=>`<div>🌐 <a href="https://${escAttr(r)}" target="_blank" rel="noopener" style="color:var(--accent2)">${escHtml(r)}</a></div>`),
+    c.web ? `<div>🔗 <a href="${escAttr(c.web)}" target="_blank" rel="noopener" style="color:var(--accent2)">${escHtml(c.web)}</a></div>` : '',
+    c.perfil_reclamado !== undefined ? `<div style="color:var(--muted);font-size:12px">Perfil Google: ${c.perfil_reclamado ? '✅ Reclamado' : '❌ Sin reclamar'}</div>` : '',
+  ].filter(Boolean).join('') || '<span style="color:var(--muted)">Sin información de contacto</span>';
+
+  // Auditoría
+  const problemas = ad.problemas || [];
+  const auditoriaWrap = document.getElementById('prospDetailAuditoriaWrap');
+  if (problemas.length || ad.notas) {
+    auditoriaWrap.style.display = '';
+    document.getElementById('prospDetailAuditoria').innerHTML = problemas.length
+      ? problemas.map(pr=>`<div class="prosp-problema-item"><span>⚠</span><span style="font-size:13px;color:#fca5a5">${escHtml(pr)}</span></div>`).join('')
+      : '<span style="color:var(--muted);font-size:13px">Sin problemas detectados</span>';
+    const notasEl = document.getElementById('prospDetailAuditoriaNotas');
+    notasEl.textContent = ad.notas || '';
+    notasEl.style.display = ad.notas ? '' : 'none';
+  } else { auditoriaWrap.style.display = 'none'; }
+
+  // Mensaje outreach
+  const mensajeWrap = document.getElementById('prospDetailMensajeWrap');
+  if (ou.mensaje_es) {
+    mensajeWrap.style.display = '';
+    document.getElementById('prospDetailMensaje').textContent = ou.mensaje_es;
+  } else { mensajeWrap.style.display = 'none'; }
+
+  // Plus code / extra
+  const extraWrap = document.getElementById('prospDetailExtraWrap');
+  if (p.plus_code) {
+    extraWrap.style.display = '';
+    document.getElementById('prospDetailExtra').innerHTML = `Plus Code: <a href="https://plus.codes/${escAttr(p.plus_code)}" target="_blank" rel="noopener" style="color:var(--accent2)">${escHtml(p.plus_code)}</a>`;
+  } else { extraWrap.style.display = 'none'; }
+
+  // Acciones en footer
+  const footerAcc = document.getElementById('prospDetailFooterAcciones');
+  if (canAct) {
+    footerAcc.innerHTML = [
+      p._estado === 'pendiente'  ? `<button class="btn btn-warning btn-sm" onclick="marcarContactado('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">📞 Contactado</button>` : '',
+      p._estado !== 'agregado'   ? `<button class="btn btn-success btn-sm" onclick="agregarAlCRM('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">➕ Al CRM</button>` : '',
+      p._estado !== 'descartado' ? `<button class="btn btn-danger btn-sm" onclick="descartarProspecto('${campId}',${p.id});actualizarBadgeModal('${campId}',${p.id})">✕ Descartar</button>` : '',
+    ].join('');
+  } else { footerAcc.innerHTML = ''; }
+
+  document.getElementById('modalProspDetail').classList.add('open');
+}
+
+function actualizarBadgeModal(campId, pid) {
+  const camp = campanas.find(c => c.id === campId);
+  const p = camp?.prospectos.find(x => x.id === pid);
+  if (!p) return;
+  const estadoLabels = {pendiente:'Pendiente',contactado:'Contactado',agregado:'En CRM',descartado:'Descartado'};
+  const badge = document.getElementById('prospDetailEstadoBadge');
+  badge.className = `prosp-estado-badge pe-${p._estado}`;
+  badge.textContent = estadoLabels[p._estado] || p._estado;
+  // Refresh footer actions
+  abrirDetalleProspecto(campId, pid);
 }
 
 async function actualizarEstadoProspecto(campId, pid, cambios) {

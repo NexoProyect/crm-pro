@@ -17,21 +17,29 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* LOGIN */
-#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 44px;width:100%;max-width:400px;box-shadow:var(--shadow)}
-.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px;justify-content:center}
-.login-logo-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px}
-.login-logo-text{font-size:26px;font-weight:800;letter-spacing:-.5px}
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+#loginScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(99,102,241,.18),transparent)}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 8px 48px rgba(0,0,0,.5);position:relative;animation:loginIn .3s ease}
+@keyframes loginIn{from{opacity:0;transform:translateY(16px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:32px;justify-content:center}
+.login-logo-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 20px rgba(99,102,241,.4)}
+.login-logo-text{font-size:28px;font-weight:800;letter-spacing:-.5px}
 .login-logo-text span{color:var(--accent2)}
-.login-title{font-size:20px;font-weight:700;margin-bottom:6px}
-.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
-.form-group{margin-bottom:16px}
-.form-label{display:block;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
-.form-input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
-.form-input:focus{border-color:var(--accent)}
+.login-title{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:32px;text-align:center}
+.form-group{margin-bottom:18px;position:relative}
+.form-label{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.form-input{width:100%;padding:13px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.form-input.error{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.1)}
 .form-input::placeholder{color:var(--muted)}
-.form-select{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;outline:none}
-.login-err{color:var(--red);font-size:13px;margin-bottom:12px;display:none}
+.form-select{width:100%;padding:13px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;outline:none}
+.pass-wrap{position:relative}
+.pass-wrap .form-input{padding-right:46px}
+.pass-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:4px;transition:color .2s;line-height:1}
+.pass-toggle:hover{color:var(--text)}
+.login-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:13px;border-radius:8px;padding:10px 14px;margin-bottom:16px;display:none;text-align:center}
 
 /* SIDEBAR */
 .sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 14px;z-index:100}
@@ -289,12 +297,26 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="login-logo-icon">📊</div>
       <div class="login-logo-text">CRM<span>Pro</span></div>
     </div>
-    <div class="login-title">Iniciar sesión</div>
-    <div class="login-sub">Accede con tu cuenta de equipo</div>
+    <div class="login-title">Bienvenido de vuelta</div>
+    <div class="login-sub">Ingresa tus credenciales para continuar</div>
     <div class="login-err" id="loginErr"></div>
-    <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" id="loginEmail" type="email" placeholder="correo@empresa.com"></div>
-    <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" id="loginPass" type="password" placeholder="••••••••"></div>
-    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px" id="loginBtn" onclick="doLogin()">Entrar →</button>
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-input" id="loginEmail" type="email" placeholder="correo@empresa.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <div class="pass-wrap">
+        <input class="form-input" id="loginPass" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+        <button class="pass-toggle" type="button" id="passToggle" onclick="togglePass()" tabindex="-1" title="Mostrar/ocultar contraseña">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;padding:14px;font-size:15px;border-radius:10px;justify-content:center" id="loginBtn" onclick="doLogin()">
+      Iniciar sesión →
+    </button>
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
+      CRM Pro · Nexo Proyect
+    </div>
   </div>
 </div>
 
@@ -912,7 +934,8 @@ async function api(method, url, body) {
   if (body !== undefined) opts.body = JSON.stringify(body);
   try {
     const r = await fetch(url, opts);
-    if (r.status === 401 && url !== '/api/logout') {
+    // Solo redirigir al login por 401 cuando ya hay sesión activa (no durante el intento de login)
+    if (r.status === 401 && url !== '/api/login' && url !== '/api/logout' && SESSION.token) {
       SESSION = { token: null, user: null };
       localStorage.removeItem('crm_token');
       location.reload();
@@ -928,23 +951,48 @@ async function api(method, url, body) {
 // ═══════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════
+function togglePass() {
+  const inp = document.getElementById('loginPass');
+  const btn = document.getElementById('passToggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function loginShowErr(msg) {
+  const err = document.getElementById('loginErr');
+  err.textContent = msg;
+  err.style.display = 'block';
+  document.getElementById('loginEmail').classList.add('error');
+  document.getElementById('loginPass').classList.add('error');
+  // Shake animation
+  const box = document.querySelector('.login-box');
+  box.style.animation = 'none';
+  requestAnimationFrame(() => { box.style.animation = 'shake .35s ease'; });
+}
+
+function loginClearErr() {
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginEmail').classList.remove('error');
+  document.getElementById('loginPass').classList.remove('error');
+}
+
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
-  const err   = document.getElementById('loginErr');
   const btn   = document.getElementById('loginBtn');
-  err.style.display = 'none';
-  if (!email || !pass) { err.textContent = 'Completa todos los campos.'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.textContent = 'Entrando…';
+  loginClearErr();
+  if (!email || !pass) { loginShowErr('Completa tu correo y contraseña.'); return; }
+  btn.disabled = true; btn.innerHTML = '<span style="opacity:.7">Verificando…</span>';
   const data = await api('POST', '/api/login', { email, password: pass });
-  btn.disabled = false; btn.textContent = 'Entrar →';
-  if (!data || data.error) { err.textContent = data?.error || 'Error de conexión'; err.style.display = 'block'; return; }
+  btn.disabled = false; btn.innerHTML = 'Iniciar sesión →';
+  if (!data || data.error) { loginShowErr(data?.error || 'Error de conexión. Intenta de nuevo.'); return; }
   SESSION = { token: data.token, user: data.user };
   localStorage.setItem('crm_token', data.token);
   iniciarApp();
 }
 
 document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
 
 async function doLogout() {
   if (SESSION.token) {

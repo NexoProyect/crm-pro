@@ -3961,7 +3961,8 @@ async function responderTicket() {
 }
 
 async function cambiarEstadoTicket(id, estado) {
-  await api('PUT', `/api/tickets/${id}`, { estado });
+  const r = await api('PUT', `/api/tickets/${id}`, { estado });
+  if (!r || r.error) { showToast('⚠️ Error al actualizar: ' + (r?.error||'sin respuesta'), 'error'); return; }
   const idx = tickets.findIndex(t => t.id === id);
   if (idx >= 0) { tickets[idx].estado = estado; tickets[idx].actualizadoEn = new Date().toISOString(); }
   actualizarBadgeTickets();
@@ -3977,20 +3978,13 @@ async function escalarTicket(id) {
   const siguientePrioridad = { baja:'media', media:'alta', alta:'critica', critica:'critica' };
   const nuevaPrioridad = siguientePrioridad[t.prioridad] || 'alta';
   // Marcar en-progreso y subir prioridad
-  await api('PUT', `/api/tickets/${id}`, { estado: 'en-progreso', prioridad: nuevaPrioridad });
+  const r = await api('PUT', `/api/tickets/${id}`, { estado: 'en-progreso', prioridad: nuevaPrioridad });
+  if (!r || r.error) { showToast('⚠️ Error al escalar: ' + (r?.error||'sin respuesta'), 'error'); return; }
   // Añadir nota de escalación como respuesta
   await api('POST', `/api/tickets/${id}/respuesta`, {
     texto: `⚠️ Escalado al Admin por ${SESSION.user.nombre} — requiere atención. Prioridad elevada a ${TICKET_PRIOR_LABEL[nuevaPrioridad]||nuevaPrioridad}.`
   });
-  // Actualizar local
-  const idx = tickets.findIndex(x => x.id === id);
-  if (idx >= 0) {
-    tickets[idx].estado = 'en-progreso';
-    tickets[idx].prioridad = nuevaPrioridad;
-    tickets[idx].actualizadoEn = new Date().toISOString();
-    if (!tickets[idx].respuestas) tickets[idx].respuestas = [];
-  }
-  // Recargar para tener la respuesta completa del servidor
+  // Recargar para tener el estado completo del servidor
   await loadTickets();
   actualizarBadgeTickets();
   renderTickets();

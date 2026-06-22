@@ -439,8 +439,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div class="page" id="page-seguimiento">
   <div class="header">
     <div class="header-left"><h1>Seguimiento</h1><p>Clientes que requieren acción</p></div>
-    <div class="header-actions">
-      <button class="btn btn-secondary" onclick="guardar()">💾 Guardar</button>
+    <div class="header-actions" id="segActions">
+      <button class="btn btn-danger btn-sm" id="btnCancelarSeg" style="display:none" onclick="cancelarSeguimiento()">✕ Cancelar</button>
+      <button class="btn btn-secondary" id="btnGuardarSeg" onclick="guardar()">💾 Guardar</button>
     </div>
   </div>
   <div class="metrics" style="margin-bottom:20px">
@@ -1083,7 +1084,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     document.getElementById('page-' + item.dataset.page).classList.add('active');
     const pg = item.dataset.page;
     if (pg === 'reportes')    renderReportes();
-    if (pg === 'seguimiento') renderSeguimiento();
+    if (pg === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
     if (pg === 'clientes')    renderClientes();
     if (pg === 'cotizaciones')renderCotizaciones();
     if (pg === 'proyectos')   renderProyectos();
@@ -1257,14 +1258,21 @@ function markUnsaved() {
     b.classList.add('btn-warning');
     b.classList.remove('btn-secondary');
   });
+  const btnCancelar = document.getElementById('btnCancelarSeg');
+  if (btnCancelar && document.getElementById('page-seguimiento').classList.contains('active')) {
+    btnCancelar.style.display = '';
+  }
 }
 function clearUnsaved() {
   _unsaved = false;
+  _segSnap = null;
   document.querySelectorAll('[onclick="guardar()"]').forEach(b => {
     if (b.dataset.orig) { b.textContent = b.dataset.orig; delete b.dataset.orig; }
     b.classList.remove('btn-warning');
     b.classList.add('btn-secondary');
   });
+  const btnCancelar = document.getElementById('btnCancelarSeg');
+  if (btnCancelar) btnCancelar.style.display = 'none';
 }
 
 function navTo(page) {
@@ -1274,7 +1282,7 @@ function navTo(page) {
   if (navItem) navItem.classList.add('active');
   document.getElementById('page-' + page).classList.add('active');
   if (page === 'clientes')    renderClientes();
-  if (page === 'seguimiento') renderSeguimiento();
+  if (page === 'seguimiento') { tomarSnapshotSeg(); renderSeguimiento(); }
   if (page === 'reportes')    renderReportes();
 }
 
@@ -1308,6 +1316,21 @@ async function guardar() {
 // SEGUIMIENTO
 // ═══════════════════════════════════════════════════
 const SEG_ESTADOS = ['Seguimiento','Mayor prioridad','Sin contactar','Llamado','WhatsApp'];
+let _segSnap = null;
+
+function tomarSnapshotSeg() {
+  _segSnap = JSON.parse(JSON.stringify(clientes));
+}
+
+function cancelarSeguimiento() {
+  if (!_segSnap) return;
+  clientes = _segSnap;
+  _segSnap = null;
+  clearUnsaved();
+  renderSeguimiento();
+  render();
+  showToast('↩ Cambios descartados');
+}
 
 function filtrarSeg(estado) {
   document.getElementById('fseg').value = estado;

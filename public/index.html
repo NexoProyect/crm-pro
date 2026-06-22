@@ -657,56 +657,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
-<!-- Modal evento -->
-<div class="modal" id="modalEvento">
-  <div class="modal-content" style="max-width:500px">
-    <div class="modal-header"><span class="modal-title" id="modalEventoTitle">Nuevo Evento</span><button class="modal-close" onclick="cerrarModal('modalEvento')">✕</button></div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
-      <input type="hidden" id="eventoId">
-      <div>
-        <label class="form-label">Título <span style="color:var(--red)">*</span></label>
-        <input class="form-input" id="eventoTitulo" placeholder="Ej: Reunión con cliente">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label class="form-label">Fecha <span style="color:var(--red)">*</span></label>
-          <input class="form-input" type="date" id="eventoFecha">
-        </div>
-        <div>
-          <label class="form-label">Hora</label>
-          <input class="form-input" type="time" id="eventoHora" placeholder="HH:MM">
-        </div>
-      </div>
-      <div>
-        <label class="form-label">Tipo</label>
-        <select class="form-input" id="eventoTipo">
-          <option value="reunion">Reunión</option>
-          <option value="llamada">Llamada</option>
-          <option value="entrega">Entrega</option>
-          <option value="demo">Demo</option>
-          <option value="interno">Interno</option>
-          <option value="externo">Externo</option>
-        </select>
-      </div>
-      <div>
-        <label class="form-label">Cliente relacionado (opcional)</label>
-        <select class="form-input" id="eventoCliente">
-          <option value="">— Sin cliente —</option>
-        </select>
-      </div>
-      <div>
-        <label class="form-label">Descripción / Detalles</label>
-        <textarea class="form-input" id="eventoDescripcion" rows="3" placeholder="Detalles del evento, agenda, etc."></textarea>
-      </div>
-      <div id="eventoErr" class="error-msg" style="display:none"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="cerrarModal('modalEvento')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarEvento()">Guardar</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════ USUARIOS ═══════════ -->
 <div class="page" id="page-usuarios">
   <div class="header">
@@ -885,6 +835,56 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </div>
 
 </main>
+
+<!-- ════ MODAL EVENTO CALENDARIO ════ -->
+<div class="modal-overlay" id="modalEvento">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><span class="modal-title" id="modalEventoTitle">Nuevo Evento</span><button class="modal-close" onclick="cerrarModal('modalEvento')">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="eventoId">
+      <div>
+        <label class="form-label">Título <span style="color:var(--red)">*</span></label>
+        <input class="form-input" id="eventoTitulo" placeholder="Ej: Reunión con cliente">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="form-label">Fecha <span style="color:var(--red)">*</span></label>
+          <input class="form-input" type="date" id="eventoFecha">
+        </div>
+        <div>
+          <label class="form-label">Hora</label>
+          <input class="form-input" type="time" id="eventoHora">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Tipo</label>
+        <select class="form-input" id="eventoTipo">
+          <option value="reunion">Reunión</option>
+          <option value="llamada">Llamada</option>
+          <option value="entrega">Entrega</option>
+          <option value="demo">Demo</option>
+          <option value="interno">Interno</option>
+          <option value="externo">Externo</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Cliente relacionado (opcional)</label>
+        <select class="form-input" id="eventoCliente">
+          <option value="">— Sin cliente —</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Descripción / Detalles</label>
+        <textarea class="form-input" id="eventoDescripcion" rows="3" placeholder="Detalles del evento, agenda, etc."></textarea>
+      </div>
+      <div id="eventoErr" class="error-msg" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalEvento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════ MODAL DETALLE PROSPECTO ════ -->
 <div class="modal-overlay" id="modalProspDetail">

@@ -1,23 +1,29 @@
-const express = require('express');
-const fs      = require('fs');
-const path    = require('path');
-const crypto  = require('crypto');
+const express      = require('express');
+const fs           = require('fs');
+const path         = require('path');
+const crypto       = require('crypto');
+const bcrypt       = require('bcryptjs');
+const cookieParser = require('cookie-parser');
 const { MongoClient } = require('mongodb');
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
-function hash(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
-
-const IS_VERCEL   = !!process.env.VERCEL;
-const DB_DIR      = path.join(__dirname, 'db');
-const ADMIN_PASS  = hash(process.env.ADMIN_PASSWORD || 'admin123');
-const TOKEN_SECRET = process.env.TOKEN_SECRET || 'crmpro-secret-2024-nexo';
+const IS_VERCEL    = !!process.env.VERCEL;
+const DB_DIR       = path.join(__dirname, 'db');
+const TOKEN_SECRET = process.env.TOKEN_SECRET || (() => {
+  if (!IS_VERCEL) console.warn('[WARN] TOKEN_SECRET no definido — usando clave insegura. Setea la variable de entorno.');
+  return 'crmpro-dev-only-' + crypto.randomBytes(16).toString('hex');
+})();
 const MONGODB_URI  = process.env.MONGODB_URI;
+const COOKIE_NAME  = 'crm_session';
+const TOKEN_TTL_S  = 8 * 60 * 60; // 8 horas
 
-// ── Tokens ────────────────────────────────────────────────────────────────────
+// ── Tokens (HMAC-SHA256, con expiración) ──────────────────────────────────────
 function signToken(payload) {
-  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const body = { ...payload, exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_S };
+  const data = Buffer.from(JSON.stringify(body)).toString('base64url');
   const sig  = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64url');
   return `${data}.${sig}`;
 }
@@ -26,15 +32,44 @@ function verifyToken(token) {
   try {
     const [data, sig] = token.split('.');
     const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64url');
-    if (sig !== expected) return null;
-    return JSON.parse(Buffer.from(data, 'base64url').toString());
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString());
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null; // expirado
+    return payload;
   } catch { return null; }
 }
 
-// ── DB layer ──────────────────────────────────────────────────────────────────
-// MongoDB: one document per collection key, shape: { _id: key, data: [...] }
-// Local:   JSON files in db/
+function setSessionCookie(res, token) {
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,                        // JS no puede leerla
+    secure: IS_VERCEL || process.env.NODE_ENV === 'production', // HTTPS en prod
+    sameSite: 'strict',                    // bloquea CSRF cross-site
+    maxAge: TOKEN_TTL_S * 1000,
+    path: '/',
+  });
+}
 
+function clearSessionCookie(res) {
+  res.clearCookie(COOKIE_NAME, { path: '/' });
+}
+
+// ── Passwords (bcrypt) ────────────────────────────────────────────────────────
+const BCRYPT_ROUNDS = 12;
+
+async function hashPassword(plain) {
+  return bcrypt.hash(plain, BCRYPT_ROUNDS);
+}
+
+async function checkPassword(plain, stored) {
+  // Soporta hashes SHA-256 legacy durante migración
+  if (/^[a-f0-9]{64}$/.test(stored)) {
+    const sha = crypto.createHash('sha256').update(plain).digest('hex');
+    return sha === stored;
+  }
+  return bcrypt.compare(plain, stored);
+}
+
+// ── DB layer ──────────────────────────────────────────────────────────────────
 let _clientPromise = null;
 
 async function getDb() {
@@ -47,7 +82,6 @@ async function getDb() {
   }
   try {
     const db = await _clientPromise;
-    // Ping to detect stale connection and reconnect if needed
     await db.command({ ping: 1 });
     return db;
   } catch {
@@ -61,23 +95,17 @@ async function getDb() {
   }
 }
 
-const adminUser = {
-  id: 1,
-  nombre: 'Johangel',
-  email: 'sm8contact@gmail.com',
-  password: ADMIN_PASS,
-  rol: 'admin',
-  activo: true,
-  avatar: 'JG',
-  creado: new Date().toISOString(),
-};
-
 async function read(key) {
   if (MONGODB_URI) {
     const db  = await getDb();
     const doc = await db.collection('store').findOne({ _id: key });
-    // Seed admin on first read of usuarios if collection is empty
     if (key === 'usuarios' && (!doc || !doc.data || doc.data.length === 0)) {
+      const adminPass = await hashPassword(process.env.ADMIN_PASSWORD || 'admin123');
+      const adminUser = {
+        id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com',
+        password: adminPass, rol: 'admin', activo: true,
+        avatar: 'JG', creado: new Date().toISOString(),
+      };
       await db.collection('store').updateOne(
         { _id: 'usuarios' },
         { $set: { data: [adminUser] } },
@@ -87,7 +115,6 @@ async function read(key) {
     }
     return doc ? doc.data : [];
   }
-  // Local filesystem
   try { return JSON.parse(fs.readFileSync(path.join(DB_DIR, key + '.json'), 'utf8')); }
   catch { return []; }
 }
@@ -105,9 +132,14 @@ async function write(key, data) {
   fs.writeFileSync(path.join(DB_DIR, key + '.json'), JSON.stringify(data, null, 2));
 }
 
-// Local-only: init JSON files if missing
-function initLocalStore() {
+async function initLocalStore() {
   if (MONGODB_URI) return;
+  const adminPass = await hashPassword(process.env.ADMIN_PASSWORD || 'admin123');
+  const adminUser = {
+    id: 1, nombre: 'Johangel', email: 'sm8contact@gmail.com',
+    password: adminPass, rol: 'admin', activo: true,
+    avatar: 'JG', creado: new Date().toISOString(),
+  };
   const defaults = {
     'clientes.json': [], 'cotizaciones.json': [], 'proyectos.json': [],
     'usuarios.json': [adminUser],
@@ -118,20 +150,23 @@ function initLocalStore() {
     if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify(d, null, 2));
   });
 }
-initLocalStore();
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function auth(roles = []) {
   return async (req, res, next) => {
-    const raw = req.headers['x-token'];
-    if (!raw) return res.status(401).json({ error: 'No autenticado' });
-    const payload = verifyToken(raw);
-    if (!payload) return res.status(401).json({ error: 'Token inválido' });
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) return res.status(401).json({ error: 'No autenticado' });
+    const payload = verifyToken(token);
+    if (!payload) return res.status(401).json({ error: 'Sesión expirada' });
     const usuarios = await read('usuarios');
     const user = usuarios.find(u => u.id === payload.id && u.activo);
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
     if (roles.length && !roles.includes(user.rol)) return res.status(403).json({ error: 'Sin permiso' });
     req.user = user;
+    // Renovar cookie si queda menos de 2 horas de vida
+    if (payload.exp - Math.floor(Date.now() / 1000) < 2 * 60 * 60) {
+      setSessionCookie(res, signToken({ id: user.id, rol: user.rol }));
+    }
     next();
   };
 }
@@ -139,14 +174,28 @@ function auth(roles = []) {
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Credenciales requeridas' });
   const usuarios = await read('usuarios');
-  const user = usuarios.find(u => u.email === email && u.password === hash(password) && u.activo);
-  if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' });
+  const user = usuarios.find(u => u.email === email && u.activo);
+  if (!user || !(await checkPassword(password, user.password)))
+    return res.status(401).json({ error: 'Credenciales incorrectas' });
+
+  // Migrar hash SHA-256 a bcrypt si aún no lo está
+  if (/^[a-f0-9]{64}$/.test(user.password)) {
+    const idx = usuarios.findIndex(u => u.id === user.id);
+    usuarios[idx].password = await hashPassword(password);
+    await write('usuarios', usuarios);
+  }
+
   const token = signToken({ id: user.id, rol: user.rol });
-  res.json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, avatar: user.avatar } });
+  setSessionCookie(res, token);
+  res.json({ user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, avatar: user.avatar } });
 });
 
-app.post('/api/logout', (req, res) => res.json({ ok: true }));
+app.post('/api/logout', (req, res) => {
+  clearSessionCookie(res);
+  res.json({ ok: true });
+});
 
 app.get('/api/me', auth(), async (req, res) => {
   const { password, ...safe } = req.user;
@@ -166,7 +215,6 @@ app.get('/api/usuarios', auth(['admin']), async (req, res) => {
   res.json((await read('usuarios')).map(({ password, ...u }) => u));
 });
 
-// Endpoint para todos los roles — solo devuelve desarrolladores activos (para asignación en proyectos)
 app.get('/api/usuarios/desarrolladores', auth(), async (req, res) => {
   res.json((await read('usuarios'))
     .filter(u => u.rol === 'desarrollador' && u.activo !== false)
@@ -176,8 +224,15 @@ app.get('/api/usuarios/desarrolladores', auth(), async (req, res) => {
 app.post('/api/usuarios', auth(['admin']), async (req, res) => {
   const usuarios = await read('usuarios');
   const { nombre, email, password, rol, avatar } = req.body;
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Contraseña mínima 6 caracteres' });
   if (usuarios.find(u => u.email === email)) return res.status(400).json({ error: 'Email ya registrado' });
-  const nuevo = { id: Date.now(), nombre, email, password: hash(password), rol, activo: true, avatar: avatar || nombre.slice(0, 2).toUpperCase(), creado: new Date().toISOString() };
+  const nuevo = {
+    id: Date.now(), nombre, email,
+    password: await hashPassword(password),
+    rol, activo: true,
+    avatar: avatar || nombre.slice(0, 2).toUpperCase(),
+    creado: new Date().toISOString(),
+  };
   usuarios.push(nuevo);
   await write('usuarios', usuarios);
   const { password: _, ...safe } = nuevo;
@@ -190,7 +245,7 @@ app.put('/api/usuarios/:id', auth(['admin']), async (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   const { password, ...rest } = req.body;
   usuarios[idx] = { ...usuarios[idx], ...rest };
-  if (password) usuarios[idx].password = hash(password);
+  if (password && password.length >= 6) usuarios[idx].password = await hashPassword(password);
   await write('usuarios', usuarios);
   res.json({ ok: true });
 });
@@ -203,18 +258,32 @@ app.delete('/api/usuarios/:id', auth(['admin']), async (req, res) => {
   res.json({ ok: true });
 });
 
+// Cambiar contraseña propia
+app.put('/api/me/password', auth(), async (req, res) => {
+  const { actual, nueva } = req.body;
+  if (!actual || !nueva || nueva.length < 6)
+    return res.status(400).json({ error: 'Contraseña nueva mínima 6 caracteres' });
+  const usuarios = await read('usuarios');
+  const idx = usuarios.findIndex(u => u.id === req.user.id);
+  if (!(await checkPassword(actual, usuarios[idx].password)))
+    return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+  usuarios[idx].password = await hashPassword(nueva);
+  await write('usuarios', usuarios);
+  res.json({ ok: true });
+});
+
 // ── COTIZACIONES ──────────────────────────────────────────────────────────────
 app.get('/api/cotizaciones', auth(), async (req, res) => res.json(await read('cotizaciones')));
 
-app.post('/api/cotizaciones', auth(['admin', 'vendedor']), async (req, res) => {
+app.post('/api/cotizaciones', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
   const cots = await read('cotizaciones');
-  const nueva = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), estado: req.body.estado || 'borrador' };
+  const nueva = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, creadoPorId: req.user.id, fecha: new Date().toISOString(), estado: req.body.estado || 'borrador' };
   cots.push(nueva);
   await write('cotizaciones', cots);
   res.json(nueva);
 });
 
-app.put('/api/cotizaciones/:id', auth(['admin', 'vendedor']), async (req, res) => {
+app.put('/api/cotizaciones/:id', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
   const cots = await read('cotizaciones');
   const idx = cots.findIndex(c => c.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
@@ -231,7 +300,7 @@ app.delete('/api/cotizaciones/:id', auth(['admin']), async (req, res) => {
 // ── PROYECTOS ─────────────────────────────────────────────────────────────────
 app.get('/api/proyectos', auth(), async (req, res) => res.json(await read('proyectos')));
 
-app.post('/api/proyectos', auth(['admin', 'vendedor']), async (req, res) => {
+app.post('/api/proyectos', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
   const proyectos = await read('proyectos');
   const nuevo = { ...req.body, id: Date.now(), creadoPor: req.user.id, creadoPorNombre: req.user.nombre, fecha: new Date().toISOString(), mensajes: [], estado: 'pendiente', progreso: 0 };
   proyectos.push(nuevo);
@@ -239,7 +308,7 @@ app.post('/api/proyectos', auth(['admin', 'vendedor']), async (req, res) => {
   res.json(nuevo);
 });
 
-app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'desarrollador']), async (req, res) => {
+app.put('/api/proyectos/:id', auth(['admin', 'vendedor', 'soporte', 'desarrollador']), async (req, res) => {
   const proyectos = await read('proyectos');
   const idx = proyectos.findIndex(p => p.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
@@ -286,7 +355,6 @@ app.post('/api/campanas', auth(['admin']), async (req, res) => {
   res.json({ ok: true, total: prospectos.length });
 });
 
-// Actualizar estado de un prospecto dentro de una campaña
 app.put('/api/campanas/:id/prospecto/:pid', auth(['admin', 'vendedor', 'soporte']), async (req, res) => {
   const campanas = await read('campanas');
   const idx = campanas.findIndex(c => c.id === req.params.id);
@@ -305,10 +373,8 @@ app.delete('/api/campanas/:id', auth(['admin']), async (req, res) => {
 
 // ── TICKETS ───────────────────────────────────────────────────────────────────
 app.get('/api/tickets', auth(), async (req, res) => {
-  const tickets = await read('tickets');
-  // No-admin only sees own tickets; admin sees all
-  if (req.user.rol === 'admin') return res.json(tickets);
-  res.json(tickets.filter(t => t.autorId === req.user.id));
+  // Todos ven todos los tickets — gestión restringida por rol en PUT/DELETE
+  res.json(await read('tickets'));
 });
 
 app.post('/api/tickets', auth(), async (req, res) => {
@@ -316,18 +382,12 @@ app.post('/api/tickets', auth(), async (req, res) => {
   const { titulo, descripcion, tipo, prioridad, clienteId, clienteNombre } = req.body;
   if (!titulo || !descripcion) return res.status(400).json({ error: 'Título y descripción requeridos' });
   const nuevo = {
-    id: Date.now(),
-    titulo, descripcion,
-    tipo: tipo || 'general',
-    prioridad: prioridad || 'media',
-    estado: 'abierto',
-    clienteId: clienteId || null,
+    id: Date.now(), titulo, descripcion,
+    tipo: tipo || 'general', prioridad: prioridad || 'media',
+    estado: 'abierto', clienteId: clienteId || null,
     clienteNombre: clienteNombre || null,
-    autorId: req.user.id,
-    autorNombre: req.user.nombre,
-    autorRol: req.user.rol,
-    creadoEn: new Date().toISOString(),
-    actualizadoEn: new Date().toISOString(),
+    autorId: req.user.id, autorNombre: req.user.nombre, autorRol: req.user.rol,
+    creadoEn: new Date().toISOString(), actualizadoEn: new Date().toISOString(),
     respuestas: [],
   };
   tickets.push(nuevo);
@@ -340,7 +400,6 @@ app.put('/api/tickets/:id', auth(), async (req, res) => {
   const idx = tickets.findIndex(t => t.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
   const t = tickets[idx];
-  // Only admin or ticket author can update
   if (req.user.rol !== 'admin' && t.autorId !== req.user.id)
     return res.status(403).json({ error: 'Sin permiso' });
   const { estado, prioridad, titulo, descripcion } = req.body;
@@ -360,16 +419,12 @@ app.post('/api/tickets/:id/respuesta', auth(), async (req, res) => {
   const { texto } = req.body;
   if (!texto) return res.status(400).json({ error: 'Texto requerido' });
   const resp = {
-    id: Date.now(),
-    texto,
-    autorId: req.user.id,
-    autorNombre: req.user.nombre,
-    autorRol: req.user.rol,
+    id: Date.now(), texto,
+    autorId: req.user.id, autorNombre: req.user.nombre, autorRol: req.user.rol,
     fecha: new Date().toISOString(),
   };
   tickets[idx].respuestas.push(resp);
   tickets[idx].actualizadoEn = new Date().toISOString();
-  // If non-admin replies to closed ticket, reopen it
   if (req.user.rol !== 'admin' && tickets[idx].estado === 'cerrado') {
     tickets[idx].estado = 'abierto';
   }
@@ -377,8 +432,13 @@ app.post('/api/tickets/:id/respuesta', auth(), async (req, res) => {
   res.json(resp);
 });
 
-app.delete('/api/tickets/:id', auth(['admin']), async (req, res) => {
-  await write('tickets', (await read('tickets')).filter(t => t.id !== parseInt(req.params.id)));
+app.delete('/api/tickets/:id', auth(), async (req, res) => {
+  const tickets = await read('tickets');
+  const t = tickets.find(x => x.id === parseInt(req.params.id));
+  if (!t) return res.status(404).json({ error: 'No encontrado' });
+  if (req.user.rol !== 'admin' && t.autorId !== req.user.id)
+    return res.status(403).json({ error: 'Sin permiso' });
+  await write('tickets', tickets.filter(x => x.id !== parseInt(req.params.id)));
   res.json({ ok: true });
 });
 
@@ -387,19 +447,15 @@ app.get('/api/eventos', auth(), async (req, res) => {
   res.json(await read('eventos'));
 });
 
-app.post('/api/eventos', auth(['admin','vendedor']), async (req, res) => {
+app.post('/api/eventos', auth(['admin', 'vendedor']), async (req, res) => {
   const eventos = await read('eventos');
   const { titulo, fecha, hora, tipo, clienteId, descripcion } = req.body;
   if (!titulo || !fecha) return res.status(400).json({ error: 'titulo y fecha requeridos' });
   const nuevo = {
-    _id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    titulo, fecha,
-    hora: hora || null,
-    tipo: tipo || 'reunion',
-    clienteId: clienteId || null,
-    descripcion: descripcion || null,
-    autorId: req.user.id,
-    autorNombre: req.user.nombre,
+    _id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    titulo, fecha, hora: hora || null, tipo: tipo || 'reunion',
+    clienteId: clienteId || null, descripcion: descripcion || null,
+    autorId: req.user.id, autorNombre: req.user.nombre,
     creado: new Date().toISOString(),
   };
   eventos.push(nuevo);
@@ -407,17 +463,17 @@ app.post('/api/eventos', auth(['admin','vendedor']), async (req, res) => {
   res.json(nuevo);
 });
 
-app.put('/api/eventos/:id', auth(['admin','vendedor']), async (req, res) => {
+app.put('/api/eventos/:id', auth(['admin', 'vendedor']), async (req, res) => {
   const eventos = await read('eventos');
   const idx = eventos.findIndex(e => e._id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'no encontrado' });
   const { titulo, fecha, hora, tipo, clienteId, descripcion } = req.body;
-  eventos[idx] = { ...eventos[idx], titulo, fecha, hora: hora||null, tipo: tipo||'reunion', clienteId: clienteId||null, descripcion: descripcion||null };
+  eventos[idx] = { ...eventos[idx], titulo, fecha, hora: hora || null, tipo: tipo || 'reunion', clienteId: clienteId || null, descripcion: descripcion || null };
   await write('eventos', eventos);
   res.json(eventos[idx]);
 });
 
-app.delete('/api/eventos/:id', auth(['admin','vendedor']), async (req, res) => {
+app.delete('/api/eventos/:id', auth(['admin', 'vendedor']), async (req, res) => {
   await write('eventos', (await read('eventos')).filter(e => e._id !== req.params.id));
   res.json({ ok: true });
 });
@@ -430,7 +486,11 @@ app.get('/{*path}', (req, res) => {
 });
 
 if (!IS_VERCEL) {
-  app.listen(3000, () => console.log('CRM Pro → http://localhost:3000'));
+  initLocalStore().then(() => {
+    app.listen(3000, () => console.log('CRM Pro → http://localhost:3000'));
+  });
+} else {
+  initLocalStore();
 }
 
 module.exports = app;

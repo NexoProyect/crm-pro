@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -514,7 +514,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="btn btn-primary" onclick="abrirModalCot()">＋ Nueva Cotización</button>
     </div>
   </div>
-  <div class="perm-box" id="cotPermBox" style="display:none">👁 Modo lectura — solo Admin y Vendedor pueden crear cotizaciones.</div>
+  <div class="perm-box" id="cotPermBox" style="display:none">👁 Modo lectura — solo Admin, Vendedor y Soporte pueden crear cotizaciones.</div>
   <div id="cotList"></div>
   <div id="emptyCot" class="empty" style="display:none"><div class="empty-icon">📄</div><p>No hay cotizaciones aún.</p></div>
 </div>
@@ -597,10 +597,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <!-- ── Tab: General ── -->
   <div id="rtab-general">
     <div class="metrics" style="margin-bottom:20px">
-      <div class="metric-card c1"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="rTotal">—</div><div class="metric-sub">prospectos</div></div>
-      <div class="metric-card c2"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="rClientes">—</div><div class="metric-sub">activos</div></div>
+      <div class="metric-card c1" style="cursor:pointer" onclick="navegarA('clientes')" title="Ver todos los prospectos"><div class="metric-icon">👥</div><div class="metric-label">Total</div><div class="metric-value" id="rTotal">—</div><div class="metric-sub">prospectos →</div></div>
+      <div class="metric-card c2" style="cursor:pointer" onclick="navegarA('clientes','Cliente')" title="Ver clientes activos"><div class="metric-icon">✅</div><div class="metric-label">Clientes</div><div class="metric-value" id="rClientes">—</div><div class="metric-sub">activos →</div></div>
       <div class="metric-card c3"><div class="metric-icon">🎯</div><div class="metric-label">Conversión</div><div class="metric-value" id="rConv">—</div><div class="metric-sub">tasa</div></div>
-      <div class="metric-card c4"><div class="metric-icon">💰</div><div class="metric-label">Cotizaciones</div><div class="metric-value" id="rCots">—</div><div class="metric-sub">creadas</div></div>
+      <div class="metric-card c4" style="cursor:pointer" onclick="navegarA('cotizaciones')" title="Ver cotizaciones"><div class="metric-icon">💰</div><div class="metric-label">Cotizaciones</div><div class="metric-value" id="rCots">—</div><div class="metric-sub">creadas →</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <div class="panel"><div class="panel-header"><span class="panel-title">Por Grupo</span></div><div style="padding:20px;height:240px"><canvas id="chartBar"></canvas></div></div>
@@ -715,13 +715,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
   </div>
 
-  <!-- Tabs admin vs mis tickets -->
-  <div class="tickets-tabs" id="ticketsTabs" style="display:none">
+  <!-- Tabs -->
+  <div class="tickets-tabs" id="ticketsTabs">
     <div class="tickets-tab active" data-ttab="todos" onclick="switchTicketTab('todos')">Todos</div>
-    <div class="tickets-tab" data-ttab="abiertos" onclick="switchTicketTab('abiertos')">Abiertos</div>
-    <div class="tickets-tab" data-ttab="en-progreso" onclick="switchTicketTab('en-progreso')">En progreso</div>
-    <div class="tickets-tab" data-ttab="resueltos" onclick="switchTicketTab('resueltos')">Resueltos</div>
-    <div class="tickets-tab" data-ttab="cerrados" onclick="switchTicketTab('cerrados')">Cerrados</div>
+    <div class="tickets-tab" data-ttab="mios" onclick="switchTicketTab('mios')">Mis tickets</div>
+    <div class="tickets-tab admin-only" data-ttab="abiertos" onclick="switchTicketTab('abiertos')" style="display:none">Abiertos</div>
+    <div class="tickets-tab admin-only" data-ttab="en-progreso" onclick="switchTicketTab('en-progreso')" style="display:none">En progreso</div>
+    <div class="tickets-tab admin-only" data-ttab="resueltos" onclick="switchTicketTab('resueltos')" style="display:none">Resueltos</div>
+    <div class="tickets-tab admin-only" data-ttab="cerrados" onclick="switchTicketTab('cerrados')" style="display:none">Cerrados</div>
   </div>
 
   <!-- Filtros -->
@@ -744,6 +745,52 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </select>
     <span class="count-badge" id="ticketCount"></span>
   </div>
+
+  <!-- Guía de prioridades -->
+  <details style="margin-bottom:16px">
+    <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);list-style:none;display:flex;align-items:center;gap:8px">
+      <span>📖</span> Guía de prioridades — ¿qué nivel usar?
+      <span style="margin-left:auto;font-size:11px;font-weight:400">Click para ver</span>
+    </summary>
+    <div style="background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:rgba(255,255,255,.03)">
+            <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Prioridad</th>
+            <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">¿Cuándo usarla?</th>
+            <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Tiempo de respuesta esperado</th>
+            <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Ejemplos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 14px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:3px 10px;border-radius:20px;font-weight:700;font-size:11px">🔴 Crítica</span></td>
+            <td style="padding:10px 14px;color:var(--text)">El negocio está detenido o hay pérdida de dinero activa. Necesita atención <strong>hoy mismo</strong>.</td>
+            <td style="padding:10px 14px;color:#fca5a5;font-weight:600">Hoy — máx. 4 horas</td>
+            <td style="padding:10px 14px;color:var(--muted)">Sistema caído, pago fallido de un cliente, datos perdidos, cliente amenaza con cancelar</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 14px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3);padding:3px 10px;border-radius:20px;font-weight:700;font-size:11px">🟠 Alta</span></td>
+            <td style="padding:10px 14px;color:var(--text)">Afecta la operación o a un cliente activo, pero hay workaround. Resolver <strong>esta semana</strong>.</td>
+            <td style="padding:10px 14px;color:#fcd34d;font-weight:600">Esta semana — máx. 3 días</td>
+            <td style="padding:10px 14px;color:var(--muted)">Bug que afecta a un cliente, entrega próxima en riesgo, solicitud urgente de cliente activo</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 14px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);padding:3px 10px;border-radius:20px;font-weight:700;font-size:11px">🔵 Media</span></td>
+            <td style="padding:10px 14px;color:var(--text)">Mejora o problema que no bloquea a nadie hoy. Para el <strong>próximo ciclo de trabajo</strong> (1-2 semanas).</td>
+            <td style="padding:10px 14px;color:#93c5fd;font-weight:600">2 semanas</td>
+            <td style="padding:10px 14px;color:var(--muted)">Mejoras de UX, petición de cliente no urgente, tareas de seguimiento, pequeños bugs visuales</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px;background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3);padding:3px 10px;border-radius:20px;font-weight:700;font-size:11px">⚪ Baja</span></td>
+            <td style="padding:10px 14px;color:var(--text)">Backlog — buena idea o detalle menor sin impacto inmediato. Se atiende <strong>cuando haya espacio</strong>.</td>
+            <td style="padding:10px 14px;color:#94a3b8;font-weight:600">1 mes o cuando haya tiempo</td>
+            <td style="padding:10px 14px;color:var(--muted)">Ideas de nuevas funciones, optimizaciones opcionales, documentación interna, tareas "para algún día"</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
 
   <div id="ticketList"></div>
   <div id="emptyTickets" class="empty" style="display:none">
@@ -830,9 +877,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <tbody>
           <tr><td>Ver clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Editar / crear clientes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
-          <tr><td>Crear cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Crear cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Ver cotizaciones</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
-          <tr><td>Crear proyectos dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Crear proyectos dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Ver / chatear proyectos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
           <tr><td>Actualizar estado / progreso dev</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-yes">●</span></td></tr>
           <tr><td>Campañas — ver prospectos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td></tr>
@@ -841,6 +888,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <tr><td>Calendario — crear / editar eventos</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Tickets — crear</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
           <tr><td>Tickets — gestionar todos</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
+          <tr><td>Tickets — gestionar el propio</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td></tr>
           <tr><td>Reportes</td><td><span class="perm-yes">●</span></td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Gestionar usuarios</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
           <tr><td>Configuración</td><td><span class="perm-yes">●</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td><td><span class="perm-no">○</span></td></tr>
@@ -865,10 +913,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="panel-body">
         <div id="cfg-perfil" class="tab-content active">
           <div style="font-size:15px;font-weight:700;margin-bottom:14px">Perfil</div>
-          <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="cfgNombre" value="Johangel"></div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cfgEmail" value="sm8contact@gmail.com"></div>
-          <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" id="cfgPass" type="password" placeholder="Dejar vacío para no cambiar"></div>
-          <button class="btn btn-primary" onclick="showToast('✅ Perfil actualizado')">Guardar</button>
+          <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="cfgNombre"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cfgEmail"></div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:4px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Cambiar contraseña</div>
+            <div class="form-group"><label class="form-label">Contraseña actual</label><input class="form-input" id="cfgPassActual" type="password" placeholder="Tu contraseña actual"></div>
+            <div class="form-group" style="margin-bottom:0"><label class="form-label">Nueva contraseña</label><input class="form-input" id="cfgPassNueva" type="password" placeholder="Mínimo 6 caracteres"></div>
+          </div>
+          <div id="cfgPerfilErr" style="display:none;color:var(--red);font-size:13px;margin-bottom:10px"></div>
+          <button class="btn btn-primary" onclick="guardarPerfil()">Guardar cambios</button>
         </div>
         <div id="cfg-datos" class="tab-content">
           <div style="font-size:15px;font-weight:700;margin-bottom:14px">Datos</div>
@@ -1391,7 +1444,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 // ═══════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════
-let SESSION = { token: null, user: null };
+let SESSION = { user: null };
 let clientes = [], cotizaciones = [], proyectos = [], usuarios = [];
 let chartDoughnut, chartBar, chartPie;
 let currentProjId = null;
@@ -1405,17 +1458,15 @@ const PROJ_STATUS_LABEL = {'pendiente':'Pendiente','en-progreso':'En progreso','
 const PROJ_STATUS_CLASS = {'pendiente':'s-pendiente','en-progreso':'s-en-progreso','revision':'s-revision','completado':'s-completado','pausado':'s-pausado'};
 
 // ═══════════════════════════════════════════════════
-// API HELPER
+// API HELPER — cookie HttpOnly, sin token en JS
 // ═══════════════════════════════════════════════════
 async function api(method, url, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json', 'x-token': SESSION.token || '' } };
+  const opts = { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
   if (body !== undefined) opts.body = JSON.stringify(body);
   try {
     const r = await fetch(url, opts);
-    // Solo redirigir al login por 401 cuando ya hay sesión activa (no durante el intento de login)
-    if (r.status === 401 && url !== '/api/login' && url !== '/api/logout' && SESSION.token) {
-      SESSION = { token: null, user: null };
-      localStorage.removeItem('crm_token');
+    if (r.status === 401 && url !== '/api/login' && url !== '/api/logout' && SESSION.user) {
+      SESSION = { user: null };
       location.reload();
       return null;
     }
@@ -1442,7 +1493,6 @@ function loginShowErr(msg) {
   err.style.display = 'block';
   document.getElementById('loginEmail').classList.add('error');
   document.getElementById('loginPass').classList.add('error');
-  // Shake animation
   const box = document.querySelector('.login-box');
   box.style.animation = 'none';
   requestAnimationFrame(() => { box.style.animation = 'shake .35s ease'; });
@@ -1464,8 +1514,7 @@ async function doLogin() {
   const data = await api('POST', '/api/login', { email, password: pass });
   btn.disabled = false; btn.innerHTML = 'Iniciar sesión →';
   if (!data || data.error) { loginShowErr(data?.error || 'Error de conexión. Intenta de nuevo.'); return; }
-  SESSION = { token: data.token, user: data.user };
-  localStorage.setItem('crm_token', data.token);
+  SESSION.user = data.user;
   iniciarApp();
 }
 
@@ -1473,21 +1522,15 @@ document.getElementById('loginPass').addEventListener('keydown', e => { if (e.ke
 document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
 
 async function doLogout() {
-  if (SESSION.token) {
-    try { await api('POST', '/api/logout'); } catch (_) {}
-  }
-  SESSION = { token: null, user: null };
-  localStorage.removeItem('crm_token');
+  try { await api('POST', '/api/logout'); } catch (_) {}
+  SESSION = { user: null };
   location.reload();
 }
 
 async function tryAutoLogin() {
-  const saved = localStorage.getItem('crm_token');
-  if (!saved) return;
-  SESSION.token = saved;
+  // La cookie se envía automáticamente — solo verificamos si la sesión sigue activa
   const data = await api('GET', '/api/me');
   if (data && !data.error) { SESSION.user = data; iniciarApp(); }
-  else { SESSION.token = null; localStorage.removeItem('crm_token'); }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1502,6 +1545,9 @@ async function iniciarApp() {
   document.getElementById('sideAvatar').textContent = u.avatar || u.nombre.slice(0,2).toUpperCase();
   document.getElementById('sideNombre').textContent = u.nombre;
   document.getElementById('sideRol').textContent    = ROL_LABELS[u.rol] || u.rol;
+  // Rellenar campos de perfil
+  document.getElementById('cfgNombre').value = u.nombre;
+  document.getElementById('cfgEmail').value  = u.email;
 
   // Show/hide nav by role
   document.querySelectorAll('.nav-item[data-roles]').forEach(item => {
@@ -1519,6 +1565,24 @@ async function iniciarApp() {
   render();
 }
 
+async function guardarPerfil() {
+  const errEl = document.getElementById('cfgPerfilErr');
+  errEl.style.display = 'none';
+  const actual = document.getElementById('cfgPassActual').value;
+  const nueva  = document.getElementById('cfgPassNueva').value;
+  if (actual || nueva) {
+    if (!actual) { errEl.textContent = 'Ingresa tu contraseña actual para cambiarla.'; errEl.style.display = 'block'; return; }
+    if (nueva.length < 6) { errEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+    const r = await api('PUT', '/api/me/password', { actual, nueva });
+    if (!r || r.error) { errEl.textContent = r?.error || 'Error al cambiar contraseña.'; errEl.style.display = 'block'; return; }
+    document.getElementById('cfgPassActual').value = '';
+    document.getElementById('cfgPassNueva').value  = '';
+    showToast('🔑 Contraseña actualizada');
+  } else {
+    showToast('✅ Sin cambios en contraseña');
+  }
+}
+
 function applyRoleUI() {
   const rol = SESSION.user.rol;
   // Dashboard buttons
@@ -1532,20 +1596,15 @@ function applyRoleUI() {
     if (bc) bc.style.display = 'none';
     if (bn) bn.style.display = 'none';
   }
-  // Cotizaciones
-  if (rol !== 'admin' && rol !== 'vendedor') {
+  // Cotizaciones — soporte puede crear; solo desarrollador queda en solo lectura
+  if (rol === 'desarrollador') {
     document.getElementById('cotActions').style.display = 'none';
     document.getElementById('cotPermBox').style.display = 'block';
   }
-  // Proyectos
+  // Proyectos — soporte puede crear; desarrollador solo actualiza
   if (rol === 'desarrollador') {
     document.getElementById('btnNuevoProj').style.display = 'none';
     document.getElementById('projPermBox').textContent = '🛠 Modo dev — puedes actualizar estado, progreso y chatear en los proyectos asignados.';
-    document.getElementById('projPermBox').style.display = 'block';
-  }
-  if (rol === 'soporte') {
-    document.getElementById('btnNuevoProj').style.display = 'none';
-    document.getElementById('projPermBox').textContent = '👁 Modo soporte — puedes ver proyectos y chatear.';
     document.getElementById('projPermBox').style.display = 'block';
   }
 }
@@ -1567,7 +1626,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     if (pg === 'proyectos')   renderProyectos();
     if (pg === 'usuarios')    renderUsuarios();
     if (pg === 'campanas')    initCampanas();
-    if (pg === 'tickets')     { loadTickets().then(initTickets); }
+    if (pg === 'tickets')     { loadTickets().then(() => { marcarTodosTicketsVistos(); initTickets(); }); }
     if (pg === 'calendario')  { loadEventos().then(renderCalendario); }
   });
 });
@@ -1659,6 +1718,19 @@ function renderTable(tbId, emptyId, cntId, q, grupo, estado) {
 // ═══════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════
+function navegarA(pagina, filtroEstado='') {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-page="${pagina}"]`);
+  if (navItem) navItem.classList.add('active');
+  document.getElementById('page-' + pagina).classList.add('active');
+  if (pagina === 'clientes') {
+    if (filtroEstado) document.getElementById('f').value = filtroEstado;
+    renderClientes();
+  }
+  if (pagina === 'cotizaciones') renderCotizaciones();
+}
+
 function render() {
   const q = document.getElementById('q').value.toLowerCase();
   const f = document.getElementById('f').value;
@@ -2319,16 +2391,19 @@ function renderCotizaciones() {
         <div class="cot-field"><label>Ítems</label><span>${(c.items||[]).length} ítem(s)</span></div>
       </div>
       ${c.notas?`<div class="cot-notas">${escHtml(c.notas)}</div>`:''}
-      ${canEdit?`<div class="cot-actions">
-        <button class="btn btn-secondary btn-sm" onclick="editarCot(${c.id})">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarCot(${c.id})">🗑 Eliminar</button>
-        <select class="filter-select" style="font-size:12px;padding:5px 9px" onchange="cambiarEstadoCot(${c.id},this.value)">
+      <div class="cot-actions">
+        ${canEdit?`<button class="btn btn-secondary btn-sm" onclick="editarCot(${c.id})">✏️ Editar</button>`:''}
+        ${canEdit?`<button class="btn btn-danger btn-sm" onclick="eliminarCot(${c.id})">🗑 Eliminar</button>`:''}
+        ${canEdit?`<select class="filter-select" style="font-size:12px;padding:5px 9px" onchange="cambiarEstadoCot(${c.id},this.value)">
           <option value="borrador"${c.estado==='borrador'?' selected':''}>Borrador</option>
           <option value="enviada"${c.estado==='enviada'?' selected':''}>Enviada</option>
           <option value="aceptada"${c.estado==='aceptada'?' selected':''}>Aceptada</option>
           <option value="rechazada"${c.estado==='rechazada'?' selected':''}>Rechazada</option>
-        </select>
-      </div>`:''}`;
+        </select>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="cotAProyecto(${c.id})" title="Exportar datos al formulario de proyecto">💻 → Proyecto</button>
+        <button class="btn btn-secondary btn-sm" onclick="cotACalendario(${c.id})" title="Agregar al calendario">📅 Calendario</button>
+        <button class="btn btn-secondary btn-sm" onclick="compartirCotizacion(${c.id})" title="Compartir como imagen">📤 Compartir</button>
+      </div>`;
     list.appendChild(div);
   });
 }
@@ -2429,6 +2504,211 @@ async function cambiarEstadoCot(id, estado) {
   showToast('✅ Estado actualizado');
 }
 
+function cotAProyecto(cotId) {
+  const c = cotizaciones.find(x => x.id === cotId);
+  if (!c) return;
+  // Ir a la página de proyectos y abrir el modal pre-rellenado
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navProj = document.querySelector('.nav-item[data-page="proyectos"]');
+  if (navProj) navProj.classList.add('active');
+  document.getElementById('page-proyectos').classList.add('active');
+  renderProyectos();
+  // Abrir modal con datos de la cotización pre-cargados
+  abrirModalProj(null, c);
+}
+
+function cotACalendario(cotId) {
+  const c = cotizaciones.find(x => x.id === cotId);
+  if (!c) return;
+  // Ir a calendario y abrir modal de evento pre-rellenado
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navCal = document.querySelector('.nav-item[data-page="calendario"]');
+  if (navCal) navCal.classList.add('active');
+  document.getElementById('page-calendario').classList.add('active');
+  loadEventos().then(renderCalendario);
+  // Pre-rellenar modal de evento con datos de la cotización
+  setTimeout(() => {
+    abrirModalEvento(null, null, c);
+  }, 100);
+}
+
+function compartirCotizacion(id) {
+  const c = cotizaciones.find(x => x.id === id);
+  if (!c) return;
+  const items = c.items || [];
+  const total = items.reduce((s, it) => s + (parseFloat(it.precio||0) * parseFloat(it.cantidad||1)), 0);
+
+  const W = 640, PADDING = 36, ROW_H = 34, HEADER_H = 130;
+  const itemsH = Math.max(items.length, 1) * ROW_H + 44;
+  const notasH = c.notas ? Math.ceil(c.notas.length / 72) * 20 + 32 : 0;
+  const H = HEADER_H + itemsH + notasH + 120;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // fondo
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(0, 0, W, H);
+
+  // barra accent top
+  const grad = ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'#6366f1'); grad.addColorStop(1,'#a855f7');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, 4);
+
+  // logo / empresa
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = 'bold 18px Segoe UI, system-ui, sans-serif';
+  ctx.fillText('CRM Pro', PADDING, 38);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px Segoe UI, system-ui, sans-serif';
+  ctx.fillText('Cotización oficial', PADDING, 56);
+
+  // título proyecto
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = 'bold 22px Segoe UI, system-ui, sans-serif';
+  ctx.fillText(c.nombreProyecto || c.tipo || 'Cotización', PADDING, 90);
+
+  // cliente + fecha
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px Segoe UI, system-ui, sans-serif';
+  const fechaTxt = c.fecha ? new Date(c.fecha).toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'}) : '';
+  ctx.fillText(`Cliente: ${c.clienteNombre||'—'}   ·   ${fechaTxt}`, PADDING, 110);
+
+  // estado badge
+  const estadoColors = {borrador:'#64748b',enviada:'#3b82f6',aceptada:'#10b981',rechazada:'#ef4444'};
+  const ec = estadoColors[c.estado] || '#64748b';
+  ctx.fillStyle = ec + '28';
+  roundRect(ctx, W - 110, 80, 80, 22, 11);
+  ctx.fill();
+  ctx.fillStyle = ec;
+  ctx.font = 'bold 11px Segoe UI, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText((c.estado||'borrador').toUpperCase(), W - 70, 95);
+  ctx.textAlign = 'left';
+
+  // separador
+  ctx.strokeStyle = '#1f2d45';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PADDING, HEADER_H); ctx.lineTo(W - PADDING, HEADER_H); ctx.stroke();
+
+  // cabecera tabla
+  let y = HEADER_H + 16;
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 10px Segoe UI, system-ui, sans-serif';
+  ctx.fillText('DESCRIPCIÓN', PADDING, y);
+  ctx.textAlign = 'center';
+  ctx.fillText('CANT', PADDING + 290, y);
+  ctx.textAlign = 'right';
+  ctx.fillText('PRECIO', W - PADDING - 70, y);
+  ctx.fillText('TOTAL', W - PADDING, y);
+  ctx.textAlign = 'left';
+  y += 10;
+  ctx.strokeStyle = '#1f2d45'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+  y += 14;
+
+  // filas items
+  items.forEach((it, i) => {
+    if (i % 2 === 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      ctx.fillRect(PADDING - 6, y - 14, W - PADDING * 2 + 12, ROW_H - 2);
+    }
+    const sub = (parseFloat(it.precio||0) * parseFloat(it.cantidad||1));
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '13px Segoe UI, system-ui, sans-serif';
+    ctx.fillText(it.desc || '—', PADDING, y + 4);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(it.cantidad || 1, PADDING + 290, y + 4);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('$' + parseFloat(it.precio||0).toLocaleString('en-US',{minimumFractionDigits:2}), W - PADDING - 70, y + 4);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillText('$' + sub.toLocaleString('en-US',{minimumFractionDigits:2}), W - PADDING, y + 4);
+    ctx.textAlign = 'left';
+    y += ROW_H;
+  });
+
+  // notas
+  if (c.notas) {
+    y += 12;
+    ctx.fillStyle = '#1a2236';
+    roundRect(ctx, PADDING, y, W - PADDING * 2, notasH - 12, 8);
+    ctx.fill();
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px Segoe UI, system-ui, sans-serif';
+    ctx.fillText('Notas:', PADDING + 10, y + 18);
+    ctx.fillStyle = '#94a3b8';
+    const words = c.notas.split(' ');
+    let line = '', lx = PADDING + 10, ly = y + 34;
+    words.forEach(w => {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > W - PADDING * 2 - 20) {
+        ctx.fillText(line, lx, ly); ly += 18; line = w;
+      } else { line = test; }
+    });
+    if (line) ctx.fillText(line, lx, ly);
+    y += notasH;
+  }
+
+  // total
+  y += 16;
+  ctx.strokeStyle = '#1f2d45'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+  y += 24;
+  ctx.fillStyle = '#64748b';
+  ctx.font = '13px Segoe UI, system-ui, sans-serif';
+  ctx.fillText('Total', PADDING, y);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 22px Segoe UI, system-ui, sans-serif';
+  ctx.fillText('$' + total.toLocaleString('en-US',{minimumFractionDigits:2}), W - PADDING, y);
+  ctx.textAlign = 'left';
+
+  // footer
+  ctx.fillStyle = '#1f2d45';
+  ctx.fillRect(0, H - 28, W, 28);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px Segoe UI, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Esta cotización es válida por 15 días · CRM Pro', W / 2, H - 10);
+  ctx.textAlign = 'left';
+
+  // descargar / compartir
+  canvas.toBlob(blob => {
+    const file = new File([blob], `cotizacion-${c.clienteNombre||id}.png`, {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      navigator.share({ files: [file], title: `Cotización — ${c.nombreProyecto||c.tipo||'Proyecto'}`, text: `Hola ${c.clienteNombre||''}, te comparto la cotización para tu proyecto.` })
+        .catch(() => descargarImagen(canvas, c, id));
+    } else {
+      descargarImagen(canvas, c, id);
+    }
+  }, 'image/png');
+}
+
+function descargarImagen(canvas, c, id) {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `cotizacion-${c.clienteNombre||id}.png`;
+  a.click();
+  showToast('📥 Imagen descargada');
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 // ═══════════════════════════════════════════════════
 // PROYECTOS
 // ═══════════════════════════════════════════════════
@@ -2479,9 +2759,9 @@ function renderProyectos() {
 document.getElementById('qProj').addEventListener('input', renderProyectos);
 document.getElementById('fProjStatus').addEventListener('change', renderProyectos);
 
-function abrirModalProj(id=null) {
+function abrirModalProj(id=null, fromCot=null) {
   document.getElementById('projId').value=id||'';
-  document.getElementById('modalProjTitle').textContent=id?'Editar Proyecto':'Nuevo Proyecto';
+  document.getElementById('modalProjTitle').textContent=id?'Editar Proyecto': fromCot?'Nuevo Proyecto (desde cotización)':'Nuevo Proyecto';
   poblarClienteDatalist('projClienteList');
   document.getElementById('projClienteSearch').value='';
   document.getElementById('projClienteId').value='';
@@ -2511,6 +2791,22 @@ function abrirModalProj(id=null) {
       document.getElementById('projFechaLimite').value=p.fechaLimite||'';
       document.getElementById('projValor').value=p.valor||'';
     }
+  } else if (fromCot) {
+    // Pre-rellenar desde cotización
+    const cli = clientes.find(x=>x.id===fromCot.clienteId);
+    document.getElementById('projClienteSearch').value=fromCot.clienteNombre||cli?.nombre||'';
+    document.getElementById('projClienteId').value=fromCot.clienteId||'';
+    document.getElementById('projNombre').value=fromCot.nombreProyecto||fromCot.tipo||'';
+    // Mapear tipo de cotización a tipo de proyecto
+    const tipoMap={'Sitio web corporativo':'Sitio web corporativo','Tienda en línea':'Tienda en línea','Landing page':'Landing page','Aplicación web':'App web','Rediseño web':'Rediseño','SEO y marketing':'SEO'};
+    document.getElementById('projTipo').value=tipoMap[fromCot.tipo]||'Sitio web corporativo';
+    const total=(fromCot.items||[]).reduce((s,it)=>s+(parseFloat(it.precio||0)*parseFloat(it.cantidad||1)),0);
+    document.getElementById('projValor').value=total||'';
+    // Construir notas con los ítems de la cotización
+    const itemsTexto=(fromCot.items||[]).map(it=>`• ${it.desc} (x${it.cantidad}) — $${parseFloat(it.precio||0).toLocaleString('en-US',{minimumFractionDigits:2})}`).join('\n');
+    const notasBase=fromCot.notas?`${fromCot.notas}\n\n`:'';
+    document.getElementById('projNotasDev').value=`${notasBase}Ítems cotizados:\n${itemsTexto}`;
+    showToast('📋 Datos de cotización cargados — revisa y ajusta lo que necesites');
   }
   document.getElementById('modalProj').classList.add('open');
 }
@@ -2835,7 +3131,7 @@ function renderCalDayPanel(fecha) {
   panel.style.display = '';
 }
 
-function abrirModalEvento(id=null, fechaPreset=null) {
+function abrirModalEvento(id=null, fechaPreset=null, fromCot=null) {
   const hoy = fechaPreset || new Date().toISOString().slice(0,10);
   document.getElementById('eventoId').value = id || '';
   document.getElementById('modalEventoTitle').textContent = id ? 'Editar Evento' : 'Nuevo Evento';
@@ -2862,6 +3158,14 @@ function abrirModalEvento(id=null, fechaPreset=null) {
       document.getElementById('eventoCliente').value = ev.clienteId || '';
       document.getElementById('eventoDescripcion').value = ev.descripcion || '';
     }
+  } else if (fromCot) {
+    const total = (fromCot.items||[]).reduce((s,it)=>s+(parseFloat(it.precio||0)*parseFloat(it.cantidad||1)),0);
+    document.getElementById('eventoTitulo').value = `Presentación cotización — ${fromCot.clienteNombre||''}`;
+    document.getElementById('eventoTipo').value = 'reunion';
+    document.getElementById('eventoCliente').value = fromCot.clienteId || '';
+    document.getElementById('eventoDescripcion').value =
+      `Cotización: ${fromCot.nombreProyecto||fromCot.tipo||'Proyecto'}\nTotal: $${total.toLocaleString('en-US',{minimumFractionDigits:2})}\n${fromCot.notas?'\nNotas: '+fromCot.notas:''}`.trim();
+    showToast('📅 Datos de cotización cargados — elige la fecha del evento');
   }
   document.getElementById('modalEvento').classList.add('open');
 }
@@ -3402,15 +3706,45 @@ async function loadTickets() {
 
 function actualizarBadgeTickets() {
   const isAdmin = SESSION.user?.rol === 'admin';
-  // Badge: tickets abiertos que me conciernen
-  const pendientes = tickets.filter(t =>
-    (isAdmin ? t.estado === 'abierto' || t.estado === 'en-progreso' : t.autorId === SESSION.user.id && t.estado !== 'cerrado')
-  ).length;
+  let pendientes;
+  if (isAdmin) {
+    // Admin: tickets abiertos o en progreso sin respuesta
+    pendientes = tickets.filter(t => t.estado === 'abierto' || t.estado === 'en-progreso').length;
+  } else {
+    // No-admin: solo sus tickets que tienen respuesta nueva (no vistos)
+    const vistos = getTicketsVistos();
+    pendientes = tickets.filter(t =>
+      t.autorId === SESSION.user.id &&
+      (t.respuestas||[]).length > 0 &&
+      !vistos.has(t.id)
+    ).length;
+  }
   const badge = document.getElementById('ticketBadge');
   if (badge) {
     badge.textContent = pendientes;
     badge.style.display = pendientes > 0 ? '' : 'none';
   }
+}
+
+function getTicketsVistos() {
+  try { return new Set(JSON.parse(localStorage.getItem('ticketsVistos_' + SESSION.user.id) || '[]')); }
+  catch { return new Set(); }
+}
+
+function marcarTicketVisto(id) {
+  const vistos = getTicketsVistos();
+  vistos.add(id);
+  localStorage.setItem('ticketsVistos_' + SESSION.user.id, JSON.stringify([...vistos]));
+}
+
+function marcarTodosTicketsVistos() {
+  const isAdmin = SESSION.user?.rol === 'admin';
+  if (isAdmin) return; // admin tiene su propia lógica de gestión
+  const misIds = tickets.filter(t => t.autorId === SESSION.user.id).map(t => t.id);
+  const vistos = getTicketsVistos();
+  misIds.forEach(id => vistos.add(id));
+  localStorage.setItem('ticketsVistos_' + SESSION.user.id, JSON.stringify([...vistos]));
+  actualizarBadgeTickets();
 }
 
 function switchTicketTab(tab) {
@@ -3434,8 +3768,9 @@ function renderTickets() {
     return new Date(b.creadoEn) - new Date(a.creadoEn);
   });
 
-  // Tab filter (admin only has tabs)
-  if (isAdmin && ticketTab !== 'todos') lista = lista.filter(t => t.estado === ticketTab);
+  // Tab filter
+  if (ticketTab === 'mios') lista = lista.filter(t => t.autorId === SESSION.user.id);
+  else if (isAdmin && ticketTab !== 'todos') lista = lista.filter(t => t.estado === ticketTab);
 
   // Search & filters
   lista = lista.filter(t =>
@@ -3581,7 +3916,7 @@ function abrirDetalleTicket(id) {
     document.getElementById('tdRespTexto').value = '';
   }
 
-  // Acciones admin
+  // Acciones: admin gestiona todo; creador puede cerrar/marcar resuelto y borrar el suyo
   const adminDiv = document.getElementById('tdAdminAcciones');
   if (isAdmin) {
     const estadoOpts = [
@@ -3590,7 +3925,17 @@ function abrirDetalleTicket(id) {
     adminDiv.innerHTML = estadoOpts.map(([v,l]) =>
       `<button class="btn btn-secondary btn-sm" onclick="cambiarEstadoTicket(${t.id},'${v}')">${l}</button>`
     ).join('') +
-    `<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑</button>`;
+    `<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑 Eliminar</button>`;
+  } else if (esMio) {
+    const btns = [];
+    if (t.estado === 'cerrado') {
+      btns.push(`<button class="btn btn-secondary btn-sm" onclick="cambiarEstadoTicket(${t.id},'abierto')">🔵 Reabrir</button>`);
+    } else {
+      btns.push(`<button class="btn btn-success btn-sm" onclick="cambiarEstadoTicket(${t.id},'cerrado')">✅ Marcar resuelto</button>`);
+    }
+    btns.push(`<button class="btn btn-warning btn-sm" onclick="escalarTicket(${t.id})" title="Notificar al admin que necesita atención urgente">🚨 Escalar al Admin</button>`);
+    btns.push(`<button class="btn btn-danger btn-sm" onclick="eliminarTicket(${t.id})">🗑 Eliminar</button>`);
+    adminDiv.innerHTML = btns.join('');
   } else { adminDiv.innerHTML = ''; }
 
   document.getElementById('modalTicketDetalle').classList.add('open');
@@ -3625,6 +3970,34 @@ async function cambiarEstadoTicket(id, estado) {
   showToast(`✅ Ticket marcado como ${TICKET_ESTADO_LABEL[estado]||estado}`);
 }
 
+async function escalarTicket(id) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  // Subir prioridad si no es ya crítica
+  const siguientePrioridad = { baja:'media', media:'alta', alta:'critica', critica:'critica' };
+  const nuevaPrioridad = siguientePrioridad[t.prioridad] || 'alta';
+  // Marcar en-progreso y subir prioridad
+  await api('PUT', `/api/tickets/${id}`, { estado: 'en-progreso', prioridad: nuevaPrioridad });
+  // Añadir nota de escalación como respuesta
+  await api('POST', `/api/tickets/${id}/respuesta`, {
+    texto: `⚠️ Escalado al Admin por ${SESSION.user.nombre} — requiere atención. Prioridad elevada a ${TICKET_PRIOR_LABEL[nuevaPrioridad]||nuevaPrioridad}.`
+  });
+  // Actualizar local
+  const idx = tickets.findIndex(x => x.id === id);
+  if (idx >= 0) {
+    tickets[idx].estado = 'en-progreso';
+    tickets[idx].prioridad = nuevaPrioridad;
+    tickets[idx].actualizadoEn = new Date().toISOString();
+    if (!tickets[idx].respuestas) tickets[idx].respuestas = [];
+  }
+  // Recargar para tener la respuesta completa del servidor
+  await loadTickets();
+  actualizarBadgeTickets();
+  renderTickets();
+  abrirDetalleTicket(id);
+  showToast('🚨 Ticket escalado al Admin');
+}
+
 async function eliminarTicket(id) {
   if (!confirm('¿Eliminar este ticket permanentemente?')) return;
   await api('DELETE', `/api/tickets/${id}`);
@@ -3637,7 +4010,10 @@ async function eliminarTicket(id) {
 
 function initTickets() {
   const isAdmin = SESSION.user.rol === 'admin';
-  document.getElementById('ticketsTabs').style.display = isAdmin ? '' : 'none';
+  // Las tabs de estado solo las ve admin
+  document.querySelectorAll('#ticketsTabs .admin-only').forEach(t => {
+    t.style.display = isAdmin ? '' : 'none';
+  });
   renderTickets();
 }
 
